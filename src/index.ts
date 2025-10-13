@@ -3,17 +3,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import express from 'express';
-import { z } from 'zod';
-
-// Define the input schema for our tool
-const TheToolArgsSchema = {
-  message: z.string().describe('A message to process'),
-  count: z.number().optional().describe('Optional count parameter'),
-};
+import { ToolRegistry, availableTools } from './tools/index.js';
 
 class MCPChatGPTServer {
   private readonly mcpServer: McpServer;
   private readonly app: express.Application;
+  private readonly toolRegistry: ToolRegistry;
 
   public constructor() {
     this.mcpServer = new McpServer(
@@ -28,6 +23,7 @@ class MCPChatGPTServer {
       }
     );
 
+    this.toolRegistry = new ToolRegistry(this.mcpServer);
     this.app = express();
     this.setupExpress();
     this.setupMCPTools();
@@ -46,64 +42,21 @@ class MCPChatGPTServer {
       res.json({
         name: 'mcp-chatgpt',
         version: '1.0.0',
-        tools: ['the-tool'],
+        tools: this.toolRegistry.getRegisteredToolNames(),
       });
     });
   }
 
   private setupMCPTools(): void {
-    // Register the tool using the McpServer's registerTool method
-    this.mcpServer.registerTool(
-      'the-tool',
-      {
-        description: 'A sample tool that processes messages and returns formatted output',
-        inputSchema: TheToolArgsSchema,
-      },
-      async args => {
-        try {
-          const result = await this.executeTheTool(args);
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify(result, null, 2),
-              },
-            ],
-          };
-        } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          return {
-            content: [
-              {
-                type: 'text',
-                text: `Error executing the-tool: ${errorMessage}`,
-              },
-            ],
-            isError: true,
-          };
-        }
-      }
-    );
+    // Register all available tools automatically
+    this.toolRegistry.registerMultiple(availableTools);
+    
+    // That's it! To add a new tool:
+    // 1. Create a new file in src/tools/your-tool-name.ts following the same pattern
+    // 2. Add your tool to the availableTools array in src/tools/index.ts
+    // 3. The tool will be automatically registered here
   }
 
-  private async executeTheTool(args: {
-    message: string;
-    count?: number | undefined;
-  }): Promise<object> {
-    const { message, count = 1 } = args;
-
-    // Sample processing logic - replace this with your actual tool implementation
-    const processedMessage = message.toUpperCase();
-    const timestamp = new Date().toISOString();
-
-    return {
-      originalMessage: message,
-      processedMessage,
-      count,
-      timestamp,
-      success: true,
-    };
-  }
 
   public async start(): Promise<void> {
     // Start Express server for HTTP endpoints
