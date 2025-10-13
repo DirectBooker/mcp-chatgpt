@@ -1,27 +1,22 @@
 #!/usr/bin/env node
 
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-  Tool,
-} from '@modelcontextprotocol/sdk/types.js';
 import express from 'express';
 import { z } from 'zod';
 
 // Define the input schema for our tool
-const TheToolArgsSchema = z.object({
+const TheToolArgsSchema = {
   message: z.string().describe('A message to process'),
   count: z.number().optional().describe('Optional count parameter'),
-});
+};
 
 class MCPChatGPTServer {
-  private readonly server: Server;
+  private readonly mcpServer: McpServer;
   private readonly app: express.Application;
 
   public constructor() {
-    this.server = new Server(
+    this.mcpServer = new McpServer(
       {
         name: 'mcp-chatgpt',
         version: '1.0.0',
@@ -35,7 +30,7 @@ class MCPChatGPTServer {
 
     this.app = express();
     this.setupExpress();
-    this.setupMCPHandlers();
+    this.setupMCPTools();
   }
 
   private setupExpress(): void {
@@ -56,42 +51,17 @@ class MCPChatGPTServer {
     });
   }
 
-  private setupMCPHandlers(): void {
-    // Handle list tools requests
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      return {
-        tools: [
-          {
-            name: 'the-tool',
-            description: 'A sample tool that processes messages and returns formatted output',
-            inputSchema: {
-              type: 'object',
-              properties: {
-                message: {
-                  type: 'string',
-                  description: 'A message to process',
-                },
-                count: {
-                  type: 'number',
-                  description: 'Optional count parameter',
-                },
-              },
-              required: ['message'],
-            },
-          } as Tool,
-        ],
-      };
-    });
-
-    // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async request => {
-      const { name, arguments: args } = request.params;
-
-      if (name === 'the-tool') {
+  private setupMCPTools(): void {
+    // Register the tool using the McpServer's registerTool method
+    this.mcpServer.registerTool(
+      'the-tool',
+      {
+        description: 'A sample tool that processes messages and returns formatted output',
+        inputSchema: TheToolArgsSchema,
+      },
+      async args => {
         try {
-          const parsed = TheToolArgsSchema.parse(args);
-          const result = await this.executeTheTool(parsed);
-
+          const result = await this.executeTheTool(args);
           return {
             content: [
               {
@@ -113,12 +83,13 @@ class MCPChatGPTServer {
           };
         }
       }
-
-      throw new Error(`Unknown tool: ${name}`);
-    });
+    );
   }
 
-  private async executeTheTool(args: z.infer<typeof TheToolArgsSchema>): Promise<object> {
+  private async executeTheTool(args: {
+    message: string;
+    count?: number | undefined;
+  }): Promise<object> {
     const { message, count = 1 } = args;
 
     // Sample processing logic - replace this with your actual tool implementation
@@ -151,7 +122,7 @@ class MCPChatGPTServer {
 
     // Start MCP server with stdio transport
     const transport = new StdioServerTransport();
-    await this.server.connect(transport);
+    await this.mcpServer.connect(transport);
     console.error('MCP server started with stdio transport');
   }
 }
