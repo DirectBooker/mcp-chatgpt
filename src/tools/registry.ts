@@ -16,7 +16,9 @@ export class ToolRegistry {
   /**
    * Register a single tool with the MCP server
    */
-  register<TInputSchema extends ZodRawShape>(tool: ToolDefinition<TInputSchema>): void {
+  register<TInputSchema extends ZodRawShape, TOutputSchema extends ZodRawShape>(
+    tool: ToolDefinition<TInputSchema, TOutputSchema>
+  ): void {
     const { config, implementation } = tool;
 
     // Check for duplicate tool names
@@ -32,6 +34,10 @@ export class ToolRegistry {
 
     if (config.inputSchema) {
       toolConfig.inputSchema = config.inputSchema;
+    }
+
+    if (config.outputSchema) {
+      toolConfig.outputSchema = config.outputSchema;
     }
 
     this.mcpServer.registerTool(config.name, toolConfig, async args => {

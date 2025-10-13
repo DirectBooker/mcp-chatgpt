@@ -33,6 +33,13 @@ const inputSchema = {
   count: z.number().optional().describe('Optional count'),
 };
 
+// Define output schema (optional but recommended)
+const outputSchema = {
+  greeting: z.string().describe('The generated greeting message'),
+  count: z.number().describe('The count value that was used'),
+  timestamp: z.string().describe('When the greeting was generated'),
+};
+
 // Implement your tool logic
 async function implementation(args: {
   name: string;
@@ -40,8 +47,9 @@ async function implementation(args: {
 }) {
   // Your tool logic here
   const result = {
-    message: `Hello, ${args.name}!`,
+    greeting: `Hello, ${args.name}!`,
     count: args.count || 1,
+    timestamp: new Date().toISOString(),
   };
 
   return {
@@ -55,11 +63,12 @@ async function implementation(args: {
 }
 
 // Export the tool definition
-export const yourTool: ToolDefinition<typeof inputSchema> = {
+export const yourTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
   config: {
     name: 'your-tool-name',
     description: 'Description of what your tool does',
     inputSchema, // Optional - omit for tools with no parameters
+    outputSchema, // Optional but recommended for documentation
   },
   implementation,
 };
@@ -106,21 +115,41 @@ const inputSchema = {
   includeMetadata: z.boolean().optional().describe('Include metadata in results'),
 };
 
-export const searchTool: ToolDefinition<typeof inputSchema> = {
+const outputSchema = {
+  results: z.array(z.object({
+    title: z.string().describe('Result title'),
+    content: z.string().describe('Result content'),
+    score: z.number().describe('Relevance score'),
+  })).describe('Search results'),
+  totalCount: z.number().describe('Total number of results found'),
+  query: z.string().describe('The original search query'),
+  executionTime: z.number().describe('Time taken to execute search in milliseconds'),
+};
+
+export const searchTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
   config: {
     name: 'search-tool',
     description: 'Search for information with customizable options',
     inputSchema,
+    outputSchema,
   },
   implementation: async (args) => {
     // args is fully typed based on your schema
+    const startTime = Date.now();
     const results = await performSearch(args.query, args.limit);
+    
+    const response = {
+      results,
+      totalCount: results.length,
+      query: args.query,
+      executionTime: Date.now() - startTime,
+    };
     
     return {
       content: [
         {
           type: 'text',
-          text: JSON.stringify(results, null, 2),
+          text: JSON.stringify(response, null, 2),
         },
       ],
     };
@@ -133,19 +162,28 @@ export const searchTool: ToolDefinition<typeof inputSchema> = {
 ### Error Handling
 The registry automatically wraps your tool implementations with error handling. If your tool throws an error, it will be caught and returned as an MCP error response.
 
+### Output Schema Benefits
+Defining output schemas provides several advantages:
+- **Documentation**: Clear specification of what your tool returns
+- **Validation**: MCP clients can validate responses against the schema  
+- **Type Safety**: Better development experience with autocomplete
+- **API Discovery**: Clients can understand your tool's output format
+
 ### Tool Annotations
 Add metadata to your tools using annotations:
 
 ```typescript
-export const annotatedTool: ToolDefinition<typeof inputSchema> = {
+export const annotatedTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
   config: {
     name: 'annotated-tool',
-    description: 'A tool with annotations',
+    description: 'A tool with annotations and schemas',
     inputSchema,
+    outputSchema,
     annotations: {
       category: 'utility',
       version: '1.0.0',
       author: 'Your Name',
+      tags: ['example', 'demo'],
     },
   },
   implementation,
@@ -163,9 +201,11 @@ The tool system is fully type-safe:
 1. **Use descriptive names**: Tool names should be kebab-case and descriptive
 2. **Add good descriptions**: Help users understand what your tool does
 3. **Validate inputs**: Use Zod schemas to validate and document parameters
-4. **Handle errors gracefully**: Let the registry handle errors, but provide meaningful error messages
-5. **Keep it focused**: Each tool should do one thing well
-6. **Document parameters**: Use `.describe()` on your Zod schemas for better UX
+4. **Define output schemas**: Document your tool's return structure for better UX
+5. **Handle errors gracefully**: Let the registry handle errors, but provide meaningful error messages
+6. **Keep it focused**: Each tool should do one thing well
+7. **Document parameters**: Use `.describe()` on your Zod schemas for better UX
+8. **Use semantic versioning**: Update tool versions when changing schemas
 
 ## 🎉 Ready to Go!
 
