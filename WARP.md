@@ -124,6 +124,264 @@ pnpm run prepare
 - Express server logs include port information
 - Tool execution results are JSON-formatted for easy inspection
 
+## Adding TypeScript Files as MCP Resources
+
+The project includes a framework for serving TypeScript files and their compiled JavaScript through MCP resources. This allows showcasing TypeScript features and compilation results.
+
+### Directory Structure
+```
+src/
+├── typescript-files/          # TypeScript source files
+│   ├── sample.tsx             # Basic TS features (classes, interfaces, generics)
+│   └── sample2.tsx            # Advanced TS (async/await, enums, error classes)
+└── resources/                 # MCP resource definitions
+    ├── typescript-files.ts    # Resource for sample.tsx
+    └── typescript-sample2.ts  # Resource for sample2.tsx
+```
+
+### Adding New TypeScript Files (4 Steps)
+
+#### 1. Create TypeScript Source File
+Create `src/typescript-files/yourfile.tsx` with TypeScript features:
+```typescript
+/**
+ * Your TypeScript demonstration file
+ * Showcase specific TS features you want to highlight
+ */
+
+export interface YourInterface {
+  id: number;
+  name: string;
+}
+
+export class YourClass {
+  private data: YourInterface[];
+  
+  constructor() {
+    this.data = [];
+  }
+  
+  public addItem(item: YourInterface): void {
+    this.data.push(item);
+  }
+}
+
+export default YourClass;
+```
+
+#### 2. Create MCP Resource File
+Create `src/resources/typescript-yourfile.ts`:
+```typescript
+import { ResourceDefinition } from './types.js';
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+
+async function implementation(): Promise<{ text: string }> {
+  try {
+    const projectRoot = process.cwd();
+    
+    // Read compiled JavaScript
+    const jsFilePath = join(projectRoot, 'dist/typescript-files/yourfile.js');
+    const jsContent = await readFile(jsFilePath, 'utf-8');
+    
+    // Read TypeScript source
+    const tsFilePath = join(projectRoot, 'src/typescript-files/yourfile.tsx');
+    const tsContent = await readFile(tsFilePath, 'utf-8');
+    
+    const response = {
+      originalTypeScript: tsContent,
+      compiledJavaScript: jsContent,
+      info: {
+        sourceFile: 'src/typescript-files/yourfile.tsx',
+        compiledFile: 'dist/typescript-files/yourfile.js',
+        compiledAt: new Date().toISOString(),
+        description: 'Your TypeScript features description'
+      }
+    };
+    
+    return { text: JSON.stringify(response, null, 2) };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return {
+      text: JSON.stringify({
+        error: 'Failed to read TypeScript/JavaScript files',
+        message: errorMessage,
+        hint: 'Run "pnpm run build" to compile TypeScript files'
+      }, null, 2)
+    };
+  }
+}
+
+export const typescriptYourfileResource: ResourceDefinition = {
+  config: {
+    uri: 'dbk-ts://yourfile',
+    name: 'Your TypeScript Description',
+    description: 'Description of what TS features this file demonstrates',
+    mimeType: 'application/json'
+  },
+  implementation,
+};
+```
+
+#### 3. Register Resource in Index
+Add to `src/resources/index.ts`:
+```typescript
+// Add import
+import { typescriptYourfileResource } from './typescript-yourfile.js';
+
+// Add to availableResources array
+export const availableResources = [
+  helloWorldResource,
+  typescriptFilesResource,
+  typescriptSample2Resource,
+  typescriptYourfileResource,  // <-- Add this line
+  // ...
+];
+
+// Add to re-exports
+export { 
+  helloWorldResource, 
+  typescriptFilesResource, 
+  typescriptSample2Resource,
+  typescriptYourfileResource   // <-- Add this line
+};
+```
+
+#### 4. Build and Test
+```bash
+# Compile TypeScript files
+pnpm run build
+
+# Restart server in tmux
+tmux kill-session -t mcp-server
+tmux new-session -d -s mcp-server 'cd /path/to/project && pnpm run build && pnpm run start'
+
+# Test the new resource
+curl -s -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "resources/read",
+    "params": {
+      "uri": "dbk-ts://yourfile"
+    }
+  }' | jq '.result.contents[0].text | fromjson | .info'
+```
+
+### Available TypeScript Resources
+- **`dbk-ts://sample`** - Basic TypeScript features (classes, interfaces, generics, utility types)
+- **`dbk-ts://sample2`** - Advanced patterns (async/await, enums, error classes, conditional types)
+- **`dbk-ts://yourfile`** - Your custom TypeScript demonstrations
+
+### Resource Response Format
+```json
+{
+  "originalTypeScript": "// Full TypeScript source code...",
+  "compiledJavaScript": "// Compiled JavaScript output...", 
+  "info": {
+    "sourceFile": "src/typescript-files/yourfile.tsx",
+    "compiledFile": "dist/typescript-files/yourfile.js", 
+    "compiledAt": "2025-10-14T03:08:20.105Z",
+    "description": "Features demonstrated in this file"
+  }
+}
+```
+
+### TypeScript Features to Showcase
+- **Basic**: Interfaces, classes, enums, generics, union types
+- **Advanced**: Conditional types, mapped types, template literals
+- **Async**: Promises, async/await, generators, async iterators
+- **Patterns**: Error handling, API clients, data structures
+- **Modern**: Optional chaining, nullish coalescing, decorators
+
+## MCP Resource Framework
+
+The project includes a comprehensive framework for adding MCP resources with minimal boilerplate. Resources are automatically registered and served through the MCP protocol.
+
+### Adding General MCP Resources
+
+#### 1. Create Resource File
+Create `src/resources/your-resource-name.ts`:
+```typescript
+import { ResourceDefinition } from './types.js';
+
+// Resource implementation - return just the content
+async function implementation(): Promise<{
+  text?: string;
+  blob?: string; // Base64-encoded binary data
+}> {
+  return {
+    text: 'Your resource content here'
+  };
+}
+
+// Export the resource definition
+export const yourResourceName: ResourceDefinition = {
+  config: {
+    uri: 'your-scheme://your-path',
+    name: 'Your Resource Name',
+    description: 'What this resource provides',
+    mimeType: 'text/plain' // or 'application/json', etc.
+  },
+  implementation,
+};
+```
+
+#### 2. Register in Index
+Add to `src/resources/index.ts`:
+```typescript
+// Import your resource
+import { yourResourceName } from './your-resource-name.js';
+
+// Add to availableResources array
+export const availableResources = [
+  helloWorldResource,
+  yourResourceName, // <-- Add this line
+  // ...
+];
+
+// Re-export for direct import
+export { helloWorldResource, yourResourceName };
+```
+
+#### 3. Build and Test
+```bash
+pnpm run build
+# Restart server to register new resource
+```
+
+### Resource Types
+
+#### Text Resources
+```typescript
+return { text: 'Your text content' };
+```
+
+#### JSON Resources
+```typescript
+return { text: JSON.stringify({ key: 'value' }) };
+```
+
+#### Binary Resources (Base64)
+```typescript
+return { blob: 'base64-encoded-string-here' };
+```
+
+### URI Schemes
+- `dbk-text://` - For text content
+- `dbk-data://` - For structured data  
+- `dbk-file://` - For file-like resources
+- `dbk-api://` - For API responses
+- `dbk-ts://` - For TypeScript files
+- Custom schemes as needed
+
+### Available Resources
+- **`dbk-text://hello`** - Simple hello world text
+- **`dbk-ts://sample`** - Basic TypeScript features
+- **`dbk-ts://sample2`** - Advanced TypeScript patterns
+
 ## Troubleshooting
 
 ### Common Issues
@@ -131,6 +389,8 @@ pnpm run prepare
 - **MCP communication**: Ensure stdio transport is not interrupted by stdout logging
 - **Type errors**: Run `pnpm run lint` to catch TypeScript issues early
 - **Avoid redirection**: User prefers to run the server inside tmux and explicitly does not want to redirect the output when running the server. Redirecting the output causes runtime issues.
+- **TypeScript compilation**: Run `pnpm run build` after adding new TypeScript files
+- **Resource not found**: Check file paths and ensure files exist in both src/ and dist/ directories
 
 ### Useful Commands
 ```bash
@@ -143,4 +403,16 @@ pnpm run dev
 
 # Check for linting issues
 pnpm run lint
+
+# List all available resources
+curl -s -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"resources/list"}' | jq '.result.resources'
+
+# Test TypeScript resource
+curl -s -X POST http://localhost:3000/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"resources/read","params":{"uri":"dbk-ts://sample"}}' | jq '.result.contents[0].text | fromjson | keys'
 ```
