@@ -31,18 +31,18 @@ export class ResourceRegistry {
         name: config.name,
         description: config.description,
         mimeType: config.mimeType,
-        ...config.annotations
+        ...config.annotations,
       },
       async () => {
         try {
           const content = await implementation();
-          
+
           // Create MCP-compliant content object
           const contentObj: any = {
             uri: config.uri,
-            mimeType: config.mimeType
+            mimeType: config.mimeType,
           };
-          
+
           // Add either text or blob, ensuring one is present
           if (content.text !== undefined) {
             contentObj.text = content.text;
@@ -51,9 +51,9 @@ export class ResourceRegistry {
           } else {
             contentObj.text = ''; // Default to empty text if neither provided
           }
-          
+
           return {
-            contents: [contentObj]
+            contents: [contentObj],
           };
         } catch (error: unknown) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -108,12 +108,17 @@ export class ResourceRegistry {
   /**
    * Get all registered resource configs for info display
    */
-  getRegisteredResourceConfigs(): Array<{ uri: string; name: string; description: string; mimeType: string }> {
+  getRegisteredResourceConfigs(): Array<{
+    uri: string;
+    name: string;
+    description: string;
+    mimeType: string;
+  }> {
     return Array.from(this.registeredResources.values()).map(resource => ({
       uri: resource.config.uri,
       name: resource.config.name,
       description: resource.config.description,
-      mimeType: resource.config.mimeType
+      mimeType: resource.config.mimeType,
     }));
   }
 }

@@ -26,17 +26,17 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
     try {
       // Use process.cwd() to get the project root
       const projectRoot = process.cwd();
-      
+
       // Path to the compiled JavaScript file
       const jsFilePath = join(projectRoot, `dist/ts-resources/${config.filename}.js`);
-      
+
       // Read the compiled JavaScript content
       const jsContent = await readFile(jsFilePath, 'utf-8');
-      
+
       // Get the original TypeScript source for reference
       const tsFilePath = join(projectRoot, `src/ts-resources/${config.filename}.tsx`);
       const tsContent = await readFile(tsFilePath, 'utf-8');
-      
+
       // Create a formatted response with both source and compiled versions
       const response = {
         originalTypeScript: tsContent,
@@ -45,30 +45,29 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
           sourceFile: `src/ts-resources/${config.filename}.tsx`,
           compiledFile: `dist/ts-resources/${config.filename}.js`,
           compiledAt: new Date().toISOString(),
-          description: config.description
-        }
+          description: config.description,
+        },
       };
-      
+
       return {
-        text: JSON.stringify(response, null, 2)
+        text: JSON.stringify(response, null, 2),
       };
-      
     } catch (error) {
       // If files don't exist or can't be read, provide helpful error
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       const errorResponse = {
         error: `Failed to read TypeScript/JavaScript files for ${config.filename}`,
         message: errorMessage,
         hint: 'Make sure to run "pnpm run build" to compile TypeScript files',
         expectedPaths: [
           `src/ts-resources/${config.filename}.tsx (source)`,
-          `dist/ts-resources/${config.filename}.js (compiled)`
-        ]
+          `dist/ts-resources/${config.filename}.js (compiled)`,
+        ],
       };
-      
+
       return {
-        text: JSON.stringify(errorResponse, null, 2)
+        text: JSON.stringify(errorResponse, null, 2),
       };
     }
   }
@@ -79,8 +78,8 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       uri: `dbk-ts://${config.uriId}`,
       name: config.name,
       description: config.description,
-      mimeType: 'application/json'
+      mimeType: 'application/json',
     },
-    implementation
+    implementation,
   };
 }
