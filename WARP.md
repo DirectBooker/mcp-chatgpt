@@ -130,6 +130,7 @@ pnpm run prepare
 - **Port conflicts**: Change PORT environment variable if 3000 is in use
 - **MCP communication**: Ensure stdio transport is not interrupted by stdout logging
 - **Type errors**: Run `pnpm run lint` to catch TypeScript issues early
+- **Avoid redirection**: User prefers to run the server inside tmux and explicitly does not want to redirect the output when running the server. Redirecting the output causes runtime issues.
 
 ### Useful Commands
 ```bash
