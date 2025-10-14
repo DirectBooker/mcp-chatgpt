@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import express from 'express';
+import cors from 'cors';
 import { ToolRegistry, availableTools } from './tools/index.js';
 
 class MCPChatGPTServer {
@@ -30,6 +31,14 @@ class MCPChatGPTServer {
   }
 
   private setupExpress(): void {
+    // Enable CORS for MCP Inspector and other web clients
+    this.app.use(cors({
+      origin: true, // Allow all origins in development
+      credentials: true,
+      methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Accept', 'Authorization']
+    }));
+    
     this.app.use(express.json());
 
     // Health check endpoint
@@ -43,7 +52,37 @@ class MCPChatGPTServer {
         name: 'mcp-chatgpt',
         version: '1.0.0',
         tools: this.toolRegistry.getRegisteredToolNames(),
+        transport: 'StreamableHTTP',
+        endpoints: {
+          mcp: 'POST /mcp (JSON-RPC over HTTP)',
+          sse: 'GET /mcp (Server-Sent Events)',
+          session: 'DELETE /mcp (Session termination)',
+        },
       });
+    });
+
+    // MCP StreamableHTTP endpoints - create new transport per request for multi-client support
+    this.app.all('/mcp', async (req, res) => {
+      try {
+        // Create a new transport for each request to prevent request ID collisions
+        const transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: undefined,
+          enableJsonResponse: true
+        });
+
+        res.on('close', () => {
+          transport.close();
+        });
+
+        await this.mcpServer.connect(transport);
+        await transport.handleRequest(req, res, req.body);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('MCP request error:', errorMessage);
+        if (!res.headersSent) {
+          res.status(500).json({ error: 'Internal server error' });
+        }
+      }
     });
   }
 
@@ -59,24 +98,28 @@ class MCPChatGPTServer {
 
 
   public async start(): Promise<void> {
+    console.error('✓ MCP server ready for multi-client connections');
+
     // Start Express server for HTTP endpoints
     const port = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3000;
     const httpServer = this.app.listen(port, () => {
-      console.error(`HTTP server running on port ${port}`);
+      console.error(`✓ HTTP server running on port ${port}`);
+      console.error(`✓ MCP endpoints available at:`);
+      console.error(`  - POST http://localhost:${port}/mcp (JSON-RPC)`);
+      console.error(`  - GET http://localhost:${port}/mcp (Server-Sent Events)`);
+      console.error(`  - DELETE http://localhost:${port}/mcp (Session termination)`);
+      console.error(`✓ Info endpoint: http://localhost:${port}/info`);
     });
 
     // Handle graceful shutdown
-    process.on('SIGINT', () => {
+    process.on('SIGINT', async () => {
       console.error('Received SIGINT, shutting down gracefully...');
+      
+      // Close HTTP server (transports are closed per-request)
       httpServer.close(() => {
         process.exit(0);
       });
     });
-
-    // Start MCP server with stdio transport
-    const transport = new StdioServerTransport();
-    await this.mcpServer.connect(transport);
-    console.error('MCP server started with stdio transport');
   }
 }
 
