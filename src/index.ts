@@ -20,6 +20,7 @@ class MCPChatGPTServer {
       {
         capabilities: {
           tools: {},
+          resources: {},
         },
       }
     );
@@ -28,6 +29,7 @@ class MCPChatGPTServer {
     this.app = express();
     this.setupExpress();
     this.setupMCPTools();
+    this.setupMCPResources();
   }
 
   private setupExpress(): void {
@@ -52,6 +54,7 @@ class MCPChatGPTServer {
         name: 'mcp-chatgpt',
         version: '1.0.0',
         tools: this.toolRegistry.getRegisteredToolNames(),
+        resources: ['dbk-text://hello'],
         transport: 'StreamableHTTP',
         endpoints: {
           mcp: 'POST /mcp (JSON-RPC over HTTP)',
@@ -94,6 +97,32 @@ class MCPChatGPTServer {
     // 1. Create a new file in src/tools/your-tool-name.ts following the same pattern
     // 2. Add your tool to the availableTools array in src/tools/index.ts
     // 3. The tool will be automatically registered here
+  }
+
+  private setupMCPResources(): void {
+    // Register the hello world resource
+    this.mcpServer.registerResource(
+      'Hello World Resource',
+      'dbk-text://hello',
+      {
+        name: 'Hello World Resource',
+        description: 'A simple hello world resource for testing',
+        mimeType: 'text/plain'
+      },
+      async () => {
+        return {
+          contents: [
+            {
+              uri: 'dbk-text://hello',
+              mimeType: 'text/plain',
+              text: 'Hello, World from my MCP!!!'
+            }
+          ]
+        };
+      }
+    );
+    
+    console.error('✓ Registered resources: dbk-text://hello');
   }
 
 
