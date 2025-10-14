@@ -1,5 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { ZodRawShape } from 'zod';
+import { z, ZodRawShape } from 'zod';
 import { ToolDefinition } from './types.js';
 
 /**
@@ -42,7 +42,28 @@ export class ToolRegistry {
 
     this.mcpServer.registerTool(config.name, toolConfig, async args => {
       try {
-        return await implementation(args as any);
+        // Validate and parse input arguments using the tool's schema
+        let parsedArgs: unknown = args;
+        if (config.inputSchema && typeof args === 'object' && args !== null) {
+          // Create a Zod object schema from the input schema
+          const zodSchema = z.object(config.inputSchema);
+          try {
+            parsedArgs = zodSchema.parse(args);
+          } catch (parseError: unknown) {
+            const errorMessage = parseError instanceof Error ? parseError.message : 'Invalid input';
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: `Input validation failed for ${config.name}: ${errorMessage}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+
+        return await implementation(parsedArgs as Parameters<typeof implementation>[0]);
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         return {
