@@ -2,23 +2,39 @@
 export * from './types.js';
 export * from './registry.js';
 
-// Import all available resources
-import { helloWorldResource } from './hello-world.js';
-import { typescriptFilesResource } from './typescript-files.js';
-import { typescriptSample2Resource } from './typescript-sample2.js';
-import { typescriptReactSampleResource } from './typescript-react-sample.js';
+// Import static resources
+import { helloWorldResource } from './instances/hello-world.js';
 
-// Export all resources in a convenient array
-export const availableResources = [
+// Import auto-discovery function
+import { discoverTypeScriptResources } from './typescript-auto-discovery.js';
+import { ResourceDefinition } from './types.js';
+
+/**
+ * Get all available resources including auto-discovered TypeScript resources
+ */
+export async function getAvailableResources(): Promise<ResourceDefinition[]> {
+  const staticResources = [helloWorldResource];
+
+  // Auto-discover TypeScript resources
+  const typescriptResources = await discoverTypeScriptResources();
+
+  return [...staticResources, ...typescriptResources];
+}
+
+/**
+ * Legacy synchronous export for backwards compatibility
+ * Note: This will be empty until auto-discovery runs
+ */
+export const availableResources: ResourceDefinition[] = [
   helloWorldResource,
-  typescriptFilesResource,
-  typescriptSample2Resource,
-  typescriptReactSampleResource,
-  // Add new resources here as you create them
-  // Example:
-  // import { myNewResource } from './my-new-resource.js';
-  // myNewResource,
+  // TypeScript resources are now auto-discovered at runtime
 ];
 
-// Re-export individual resources for direct import if needed
-export { helloWorldResource, typescriptFilesResource, typescriptSample2Resource, typescriptReactSampleResource };
+// Re-export individual static resources
+export { helloWorldResource };
+
+// Re-export auto-discovery utilities
+export {
+  discoverTypeScriptResources,
+  getDiscoveredTypeScriptFiles,
+} from './typescript-auto-discovery.js';

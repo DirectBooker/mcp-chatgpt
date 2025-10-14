@@ -3,7 +3,7 @@ export * from './types.js';
 export * from './registry.js';
 
 // Import all available tools
-import { hotelSearchTool } from './hotel-search.js';
+import { hotelSearchTool } from './instances/hotel-search.js';
 
 // Export all tools in a convenient array
 export const availableTools = [

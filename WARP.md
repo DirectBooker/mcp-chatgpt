@@ -133,22 +133,27 @@ The project includes a framework for serving TypeScript files and their compiled
 ### Directory Structure
 ```
 src/
-├── typescript-files/          # TypeScript source files
+├── ts-resources/              # TypeScript source files
 │   ├── sample.tsx             # Basic TS features (classes, interfaces, generics)
 │   └── sample2.tsx            # Advanced TS (async/await, enums, error classes)
 └── resources/                 # MCP resource definitions
-    ├── typescript-files.ts    # Resource for sample.tsx
-    └── typescript-sample2.ts  # Resource for sample2.tsx
+    └── typescript-auto-discovery.ts  # Auto-discovers TS files
 ```
 
-### Adding New TypeScript Files (4 Steps)
+### Adding New TypeScript Files (1 Step!)
 
-#### 1. Create TypeScript Source File
-Create `src/typescript-files/yourfile.tsx` with TypeScript features:
+**🎉 Auto-Discovery**: TypeScript files are now automatically discovered! Just add a `.ts` or `.tsx` file to `src/ts-resources/` and it will automatically become an MCP resource.
+
+#### 1. Create TypeScript Source File (That's It!)
+Create `src/ts-resources/yourfile.tsx` with TypeScript features:
 ```typescript
 /**
  * Your TypeScript demonstration file
  * Showcase specific TS features you want to highlight
+ * 
+ * @mcp-name: "Your Display Name"
+ * @mcp-description: "Detailed description of what this file demonstrates"
+ * @mcp-uri: "custom-uri-id"
  */
 
 export interface YourInterface {
@@ -171,78 +176,32 @@ export class YourClass {
 export default YourClass;
 ```
 
-#### 2. Create MCP Resource File
-Create `src/resources/typescript-yourfile.ts` using the factory function:
-```typescript
-import { createTypeScriptResource } from './typescript-resource-factory.js';
+**Optional Metadata**: Add `@mcp-name`, `@mcp-description`, and `@mcp-uri` in comments to customize the MCP resource. If omitted, sensible defaults are generated from the filename.
 
-// Export the resource definition using the factory
-export const typescriptYourfileResource = createTypeScriptResource({
-  filename: 'yourfile',           // Filename without extension
-  uriId: 'yourfile',             // URI identifier (dbk-ts://yourfile)
-  name: 'Your TypeScript Description',
-  description: 'Description of what TS features this file demonstrates'
-});
-```
-
-**Benefits of the Factory Function:**
-- **Eliminates ~50+ lines** of boilerplate code per resource
-- **Consistent error handling** across all TypeScript resources
-- **Centralized implementation** that's easier to maintain and update
-- **Type-safe configuration** with clear parameter names
-
-#### 3. Register Resource in Index
-Add to `src/resources/index.ts`:
-```typescript
-// Add import
-import { typescriptYourfileResource } from './typescript-yourfile.js';
-
-// Add to availableResources array
-export const availableResources = [
-  helloWorldResource,
-  typescriptFilesResource,
-  typescriptSample2Resource,
-  typescriptYourfileResource,  // <-- Add this line
-  // ...
-];
-
-// Add to re-exports
-export { 
-  helloWorldResource, 
-  typescriptFilesResource, 
-  typescriptSample2Resource,
-  typescriptYourfileResource   // <-- Add this line
-};
-```
-
-#### 4. Build and Test
+#### 2. Build and Test (Optional)
 ```bash
 # Compile TypeScript files
 pnpm run build
 
-# Restart server in tmux
-tmux kill-session -t mcp-server
-tmux new-session -d -s mcp-server 'cd /path/to/project && pnpm run build && pnpm run start'
+# Start/restart server
+pnpm start
 
-# Test the new resource
-curl -s -X POST http://localhost:3000/mcp \
-  -H "Content-Type: application/json" \
-  -H "Accept: application/json, text/event-stream" \
-  -d '{
-    "jsonrpc": "2.0",
-    "id": 1,
-    "method": "resources/read",
-    "params": {
-      "uri": "dbk-ts://yourfile"
-    }
-  }' | jq '.result.contents[0].text | fromjson | .info'
+# The new TypeScript file is automatically discovered and available!
+# Check available resources:
+curl -s http://localhost:3000/info | jq '.resources'
 ```
 
-### Available TypeScript Resources
+**🎉 That's it!** Your TypeScript file is now automatically available as an MCP resource at `dbk-ts://yourfile` (or your custom URI if specified).
+
+### Auto-Discovered TypeScript Resources
+All `.ts` and `.tsx` files in `src/ts-resources/` are automatically discovered:
+
 - **`dbk-ts://sample`** - Basic TypeScript features (classes, interfaces, generics, utility types)
 - **`dbk-ts://sample2`** - Advanced patterns (async/await, enums, error classes, conditional types)
 - **`dbk-ts://react-sample`** - React TypeScript component with JSX, hooks, and modern patterns
-- **`dbk-ts://yourfile`** - Your custom TypeScript demonstrations
+- **`dbk-ts://yourfile`** - Any TypeScript file you add is automatically available!
+
+**Custom URIs**: If a file includes `@mcp-uri: "custom-name"` in its header comments, it will be available at `dbk-ts://custom-name` instead of the filename.
 
 ### Resource Response Format
 ```json
@@ -250,8 +209,8 @@ curl -s -X POST http://localhost:3000/mcp \
   "originalTypeScript": "// Full TypeScript source code...",
   "compiledJavaScript": "// Compiled JavaScript output...", 
   "info": {
-    "sourceFile": "src/typescript-files/yourfile.tsx",
-    "compiledFile": "dist/typescript-files/yourfile.js", 
+    "sourceFile": "src/ts-resources/yourfile.tsx",
+    "compiledFile": "dist/ts-resources/yourfile.js",
     "compiledAt": "2025-10-14T03:08:20.105Z",
     "description": "Features demonstrated in this file"
   }

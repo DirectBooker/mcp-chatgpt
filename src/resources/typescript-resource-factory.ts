@@ -28,13 +28,13 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       const projectRoot = process.cwd();
       
       // Path to the compiled JavaScript file
-      const jsFilePath = join(projectRoot, `dist/typescript-files/${config.filename}.js`);
+      const jsFilePath = join(projectRoot, `dist/ts-resources/${config.filename}.js`);
       
       // Read the compiled JavaScript content
       const jsContent = await readFile(jsFilePath, 'utf-8');
       
       // Get the original TypeScript source for reference
-      const tsFilePath = join(projectRoot, `src/typescript-files/${config.filename}.tsx`);
+      const tsFilePath = join(projectRoot, `src/ts-resources/${config.filename}.tsx`);
       const tsContent = await readFile(tsFilePath, 'utf-8');
       
       // Create a formatted response with both source and compiled versions
@@ -42,8 +42,8 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
         originalTypeScript: tsContent,
         compiledJavaScript: jsContent,
         info: {
-          sourceFile: `src/typescript-files/${config.filename}.tsx`,
-          compiledFile: `dist/typescript-files/${config.filename}.js`,
+          sourceFile: `src/ts-resources/${config.filename}.tsx`,
+          compiledFile: `dist/ts-resources/${config.filename}.js`,
           compiledAt: new Date().toISOString(),
           description: config.description
         }
@@ -62,8 +62,8 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
         message: errorMessage,
         hint: 'Make sure to run "pnpm run build" to compile TypeScript files',
         expectedPaths: [
-          `src/typescript-files/${config.filename}.tsx (source)`,
-          `dist/typescript-files/${config.filename}.js (compiled)`
+          `src/ts-resources/${config.filename}.tsx (source)`,
+          `dist/ts-resources/${config.filename}.js (compiled)`
         ]
       };
       

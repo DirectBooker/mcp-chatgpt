@@ -5,7 +5,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import express from 'express';
 import cors from 'cors';
 import { ToolRegistry, availableTools } from './tools/index.js';
-import { ResourceRegistry, availableResources } from './resources/index.js';
+import { ResourceRegistry, getAvailableResources } from './resources/index.js';
 
 class MCPChatGPTServer {
   private readonly mcpServer: McpServer;
@@ -32,7 +32,7 @@ class MCPChatGPTServer {
     this.app = express();
     this.setupExpress();
     this.setupMCPTools();
-    this.setupMCPResources();
+    // Resources setup is async and happens in start()
   }
 
   private setupExpress(): void {
@@ -102,18 +102,24 @@ class MCPChatGPTServer {
     // 3. The tool will be automatically registered here
   }
 
-  private setupMCPResources(): void {
-    // Register all available resources automatically
-    this.resourceRegistry.registerMultiple(availableResources);
+  private async setupMCPResources(): Promise<void> {
+    // Register all available resources automatically, including auto-discovered TypeScript files
+    await this.resourceRegistry.registerMultipleAsync(getAvailableResources());
     
     // That's it! To add a new resource:
-    // 1. Create a new file in src/resources/your-resource-name.ts following the same pattern
-    // 2. Add your resource to the availableResources array in src/resources/index.ts
-    // 3. The resource will be automatically registered here
+    // For static resources:
+    //   1. Create a new file in src/resources/your-resource-name.ts following the same pattern
+    //   2. Add your resource to the static resources list in src/resources/index.ts
+    // For TypeScript files:
+    //   1. Just add a .ts or .tsx file to src/ts-resources/
+    //   2. It will be automatically discovered and registered as an MCP resource!
   }
 
 
   public async start(): Promise<void> {
+    // Setup resources with auto-discovery
+    await this.setupMCPResources();
+    
     console.error('✓ MCP server ready for multi-client connections');
 
     // Start Express server for HTTP endpoints

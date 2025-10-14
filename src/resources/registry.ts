@@ -77,6 +77,14 @@ export class ResourceRegistry {
   }
 
   /**
+   * Register multiple resources at once (async version)
+   */
+  async registerMultipleAsync(resourcesPromise: Promise<ResourceDefinition[]>): Promise<void> {
+    const resources = await resourcesPromise;
+    this.registerMultiple(resources);
+  }
+
+  /**
    * Get list of registered resource URIs
    */
   getRegisteredResourceUris(): string[] {

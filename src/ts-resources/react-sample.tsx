@@ -1,6 +1,10 @@
 /**
  * React TypeScript sample demonstrating JSX, event handling, and modern React patterns
  * This showcases React component development with TypeScript integration
+ * 
+ * @mcp-name: "React TypeScript Component"
+ * @mcp-description: "Interactive React component with hooks, TypeScript interfaces, event handling, and Google search integration"
+ * @mcp-uri: "react-component"
  */
 
 import React, { useState, useCallback, useMemo } from 'react';

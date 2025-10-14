@@ -1,11 +1,11 @@
-import { ResourceDefinition } from './types.js';
+import { ResourceDefinition } from '../types.js';
 
 // Resource implementation function - just return the content
 async function implementation(): Promise<{
   text: string;
 }> {
   return {
-    text: 'Hello, World from my MCP!!!'
+    text: 'Hello, World from my MCP!!!',
   };
 }
 
@@ -15,7 +15,7 @@ export const helloWorldResource: ResourceDefinition = {
     uri: 'dbk-text://hello',
     name: 'Hello World Resource',
     description: 'A simple hello world resource for testing',
-    mimeType: 'text/plain'
+    mimeType: 'text/plain',
   },
   implementation,
 };
