@@ -128,6 +128,8 @@ pnpm run prepare
 
 The project includes a framework for serving TypeScript files and their compiled JavaScript through MCP resources. This allows showcasing TypeScript features and compilation results.
 
+**Factory Function**: The project uses `createTypeScriptResource()` to eliminate boilerplate code. Instead of writing 50+ lines of duplicate resource implementation code, you only need to provide 4 configuration parameters.
+
 ### Directory Structure
 ```
 src/
@@ -170,58 +172,24 @@ export default YourClass;
 ```
 
 #### 2. Create MCP Resource File
-Create `src/resources/typescript-yourfile.ts`:
+Create `src/resources/typescript-yourfile.ts` using the factory function:
 ```typescript
-import { ResourceDefinition } from './types.js';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
+import { createTypeScriptResource } from './typescript-resource-factory.js';
 
-async function implementation(): Promise<{ text: string }> {
-  try {
-    const projectRoot = process.cwd();
-    
-    // Read compiled JavaScript
-    const jsFilePath = join(projectRoot, 'dist/typescript-files/yourfile.js');
-    const jsContent = await readFile(jsFilePath, 'utf-8');
-    
-    // Read TypeScript source
-    const tsFilePath = join(projectRoot, 'src/typescript-files/yourfile.tsx');
-    const tsContent = await readFile(tsFilePath, 'utf-8');
-    
-    const response = {
-      originalTypeScript: tsContent,
-      compiledJavaScript: jsContent,
-      info: {
-        sourceFile: 'src/typescript-files/yourfile.tsx',
-        compiledFile: 'dist/typescript-files/yourfile.js',
-        compiledAt: new Date().toISOString(),
-        description: 'Your TypeScript features description'
-      }
-    };
-    
-    return { text: JSON.stringify(response, null, 2) };
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return {
-      text: JSON.stringify({
-        error: 'Failed to read TypeScript/JavaScript files',
-        message: errorMessage,
-        hint: 'Run "pnpm run build" to compile TypeScript files'
-      }, null, 2)
-    };
-  }
-}
-
-export const typescriptYourfileResource: ResourceDefinition = {
-  config: {
-    uri: 'dbk-ts://yourfile',
-    name: 'Your TypeScript Description',
-    description: 'Description of what TS features this file demonstrates',
-    mimeType: 'application/json'
-  },
-  implementation,
-};
+// Export the resource definition using the factory
+export const typescriptYourfileResource = createTypeScriptResource({
+  filename: 'yourfile',           // Filename without extension
+  uriId: 'yourfile',             // URI identifier (dbk-ts://yourfile)
+  name: 'Your TypeScript Description',
+  description: 'Description of what TS features this file demonstrates'
+});
 ```
+
+**Benefits of the Factory Function:**
+- **Eliminates ~50+ lines** of boilerplate code per resource
+- **Consistent error handling** across all TypeScript resources
+- **Centralized implementation** that's easier to maintain and update
+- **Type-safe configuration** with clear parameter names
 
 #### 3. Register Resource in Index
 Add to `src/resources/index.ts`:
@@ -273,6 +241,7 @@ curl -s -X POST http://localhost:3000/mcp \
 ### Available TypeScript Resources
 - **`dbk-ts://sample`** - Basic TypeScript features (classes, interfaces, generics, utility types)
 - **`dbk-ts://sample2`** - Advanced patterns (async/await, enums, error classes, conditional types)
+- **`dbk-ts://react-sample`** - React TypeScript component with JSX, hooks, and modern patterns
 - **`dbk-ts://yourfile`** - Your custom TypeScript demonstrations
 
 ### Resource Response Format
