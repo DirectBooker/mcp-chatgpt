@@ -6,6 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import { ToolRegistry, availableTools } from './tools/index.js';
 import { ResourceRegistry, getAvailableResources } from './resources/index.js';
+import { initializeUrlSalt } from './resources/typescript-resource-factory.js';
 
 class MCPChatGPTServer {
   private readonly mcpServer: McpServer;
@@ -118,6 +119,9 @@ class MCPChatGPTServer {
   }
 
   public async start(): Promise<void> {
+    // Initialize URL salt for cache busting
+    initializeUrlSalt();
+    
     // Setup resources with auto-discovery
     await this.setupMCPResources();
 

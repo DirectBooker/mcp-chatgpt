@@ -32,6 +32,10 @@ export class ToolRegistry {
       annotations: config.annotations,
     };
 
+    if (config._meta) {
+      toolConfig._meta = config._meta;
+    }
+
     if (config.inputSchema) {
       toolConfig.inputSchema = config.inputSchema;
     }

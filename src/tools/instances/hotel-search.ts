@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { ToolDefinition } from '../types.js';
+import { createSaltedUri } from '../../resources/typescript-resource-factory.js';
 
 // Input schema for hotel search
 const inputSchema = {
@@ -39,6 +40,10 @@ const outputSchema = {
           .describe(
             'A persistent id for this hotel which can be used with other tools. Prefer the hotel-id field, if present'
           ),
+        carousel_image: z
+          .string()
+          .optional()
+          .describe('Thumbnail image URL for the hotel, if available'),
       })
       .describe('Individual hotel information')
   ),
@@ -55,6 +60,7 @@ interface Hotel {
   amenities: string[];
   'hotel-id'?: number;
   'property-token': string;
+  carousel_image?: string;
 }
 
 // Tool implementation function
@@ -118,6 +124,9 @@ async function implementation(args: {
       ? `Located in ${location}. Features: ${topAmenities}`
       : `Hotel located in ${location}`;
 
+    // Extract carousel image from first photo's thumbnail_url
+    const carouselImage = property.photos?.[0]?.thumbnail_url || undefined;
+
     return {
       name: property.name || 'Unknown Hotel',
       price: property.display_price?.price?.price_per_night || 'Price not available',
@@ -127,6 +136,7 @@ async function implementation(args: {
       'hotel-id': property['hotel-id'] || property.hotel_id || undefined,
       'property-token':
         property['property-token'] || property.property_token || property.token || 'unknown',
+      carousel_image: carouselImage,
     };
   });
 
@@ -183,6 +193,13 @@ export const hotelSearchTool: ToolDefinition<typeof inputSchema, typeof outputSc
     inputSchema,
     outputSchema,
     annotations: { readOnlyHint: true },
+    _meta: {
+      get "openai/outputTemplate"(): string {
+        return createSaltedUri("carousel");
+      },
+      "openai/toolInvocation/invoking": "Displaying the hotel list",
+      "openai/toolInvocation/invoked": "Displayed the hotel list"
+    },
   },
   implementation,
 };

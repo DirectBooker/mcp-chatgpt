@@ -17,6 +17,36 @@ export interface TypeScriptResourceConfig {
 }
 
 /**
+ * Salt value for cache busting, set at startup
+ */
+let urlSalt: string | null = null;
+
+/**
+ * Initialize the URL salt for cache busting
+ */
+export function initializeUrlSalt(): void {
+  urlSalt = Date.now().toString();
+  console.error(`✓ TypeScript resource URL salt initialized: ${urlSalt}`);
+}
+
+/**
+ * Get the current URL salt
+ */
+export function getUrlSalt(): string {
+  if (!urlSalt) {
+    throw new Error('URL salt not initialized. Call initializeUrlSalt() first.');
+  }
+  return urlSalt;
+}
+
+/**
+ * Create a salted URI for a TypeScript resource
+ */
+export function createSaltedUri(uriId: string): string {
+  return `dbk-ts://${uriId}?salt=${getUrlSalt()}`;
+}
+
+/**
  * Factory function to create TypeScript MCP resources with shared implementation
  * This eliminates boilerplate code duplication across TypeScript resource files
  */
@@ -33,41 +63,33 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       // Read the compiled JavaScript content
       const jsContent = await readFile(jsFilePath, 'utf-8');
 
-      // Get the original TypeScript source for reference
-      const tsFilePath = join(projectRoot, `src/ts-resources/${config.filename}.tsx`);
-      const tsContent = await readFile(tsFilePath, 'utf-8');
-
-      // Create a formatted response with both source and compiled versions
-      const response = {
-        originalTypeScript: tsContent,
-        compiledJavaScript: jsContent,
-        info: {
-          sourceFile: `src/ts-resources/${config.filename}.tsx`,
-          compiledFile: `dist/ts-resources/${config.filename}.js`,
-          compiledAt: new Date().toISOString(),
-          description: config.description,
-        },
+      // Create import map for React and other dependencies
+      const importMap = {
+        imports: {
+          'react': 'https://esm.sh/react@18',
+          'react/jsx-runtime': 'https://esm.sh/react@18/jsx-runtime',
+          'react-dom': 'https://esm.sh/react-dom@18',
+          'react-dom/client': 'https://esm.sh/react-dom@18/client'
+        }
       };
 
+      // Return HTML with import map and compiled JavaScript
       return {
-        text: JSON.stringify(response, null, 2),
+        text: `<script type="importmap">${JSON.stringify(importMap, null, 2)}</script>
+<div style="color: blue; background-color: white; padding: 1em; border: 1px solid black;">George can hack, tonsils.</div>
+<script type="module">${jsContent}</script>`,
       };
     } catch (error) {
       // If files don't exist or can't be read, provide helpful error
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-      const errorResponse = {
-        error: `Failed to read TypeScript/JavaScript files for ${config.filename}`,
-        message: errorMessage,
-        hint: 'Make sure to run "pnpm run build" to compile TypeScript files',
-        expectedPaths: [
-          `src/ts-resources/${config.filename}.tsx (source)`,
-          `dist/ts-resources/${config.filename}.js (compiled)`,
-        ],
-      };
+      const errorText = `// Error: Failed to read compiled JavaScript for ${config.filename}
+// ${errorMessage}
+// Hint: Make sure to run "pnpm run build" to compile TypeScript files
+// Expected file: dist/ts-resources/${config.filename}.js`;
 
       return {
-        text: JSON.stringify(errorResponse, null, 2),
+        text: errorText,
       };
     }
   }
@@ -75,10 +97,10 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
   // Return the complete resource definition
   return {
     config: {
-      uri: `dbk-ts://${config.uriId}`,
+      uri: createSaltedUri(config.uriId),
       name: config.name,
       description: config.description,
-      mimeType: 'application/json',
+      mimeType: 'text/html+skybridge',
     },
     implementation,
   };
