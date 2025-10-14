@@ -5,11 +5,13 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import express from 'express';
 import cors from 'cors';
 import { ToolRegistry, availableTools } from './tools/index.js';
+import { ResourceRegistry, availableResources } from './resources/index.js';
 
 class MCPChatGPTServer {
   private readonly mcpServer: McpServer;
   private readonly app: express.Application;
   private readonly toolRegistry: ToolRegistry;
+  private readonly resourceRegistry: ResourceRegistry;
 
   public constructor() {
     this.mcpServer = new McpServer(
@@ -26,6 +28,7 @@ class MCPChatGPTServer {
     );
 
     this.toolRegistry = new ToolRegistry(this.mcpServer);
+    this.resourceRegistry = new ResourceRegistry(this.mcpServer);
     this.app = express();
     this.setupExpress();
     this.setupMCPTools();
@@ -54,7 +57,7 @@ class MCPChatGPTServer {
         name: 'mcp-chatgpt',
         version: '1.0.0',
         tools: this.toolRegistry.getRegisteredToolNames(),
-        resources: ['dbk-text://hello'],
+        resources: this.resourceRegistry.getRegisteredResourceUris(),
         transport: 'StreamableHTTP',
         endpoints: {
           mcp: 'POST /mcp (JSON-RPC over HTTP)',
@@ -100,29 +103,13 @@ class MCPChatGPTServer {
   }
 
   private setupMCPResources(): void {
-    // Register the hello world resource
-    this.mcpServer.registerResource(
-      'Hello World Resource',
-      'dbk-text://hello',
-      {
-        name: 'Hello World Resource',
-        description: 'A simple hello world resource for testing',
-        mimeType: 'text/plain'
-      },
-      async () => {
-        return {
-          contents: [
-            {
-              uri: 'dbk-text://hello',
-              mimeType: 'text/plain',
-              text: 'Hello, World from my MCP!!!'
-            }
-          ]
-        };
-      }
-    );
+    // Register all available resources automatically
+    this.resourceRegistry.registerMultiple(availableResources);
     
-    console.error('✓ Registered resources: dbk-text://hello');
+    // That's it! To add a new resource:
+    // 1. Create a new file in src/resources/your-resource-name.ts following the same pattern
+    // 2. Add your resource to the availableResources array in src/resources/index.ts
+    // 3. The resource will be automatically registered here
   }
 
 
