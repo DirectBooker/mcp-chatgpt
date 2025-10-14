@@ -37,13 +37,15 @@ class MCPChatGPTServer {
 
   private setupExpress(): void {
     // Enable CORS for MCP Inspector and other web clients
-    this.app.use(cors({
-      origin: true, // Allow all origins in development
-      credentials: true,
-      methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Accept', 'Authorization']
-    }));
-    
+    this.app.use(
+      cors({
+        origin: true, // Allow all origins in development
+        credentials: true,
+        methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
+      })
+    );
+
     this.app.use(express.json());
 
     // Health check endpoint
@@ -73,7 +75,7 @@ class MCPChatGPTServer {
         // Create a new transport for each request to prevent request ID collisions
         const transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: undefined,
-          enableJsonResponse: true
+          enableJsonResponse: true,
         });
 
         res.on('close', () => {
@@ -95,7 +97,7 @@ class MCPChatGPTServer {
   private setupMCPTools(): void {
     // Register all available tools automatically
     this.toolRegistry.registerMultiple(availableTools);
-    
+
     // That's it! To add a new tool:
     // 1. Create a new file in src/tools/your-tool-name.ts following the same pattern
     // 2. Add your tool to the availableTools array in src/tools/index.ts
@@ -105,7 +107,7 @@ class MCPChatGPTServer {
   private async setupMCPResources(): Promise<void> {
     // Register all available resources automatically, including auto-discovered TypeScript files
     await this.resourceRegistry.registerMultipleAsync(getAvailableResources());
-    
+
     // That's it! To add a new resource:
     // For static resources:
     //   1. Create a new file in src/resources/your-resource-name.ts following the same pattern
@@ -115,11 +117,10 @@ class MCPChatGPTServer {
     //   2. It will be automatically discovered and registered as an MCP resource!
   }
 
-
   public async start(): Promise<void> {
     // Setup resources with auto-discovery
     await this.setupMCPResources();
-    
+
     console.error('✓ MCP server ready for multi-client connections');
 
     // Start Express server for HTTP endpoints
@@ -136,7 +137,7 @@ class MCPChatGPTServer {
     // Handle graceful shutdown
     process.on('SIGINT', async () => {
       console.error('Received SIGINT, shutting down gracefully...');
-      
+
       // Close HTTP server (transports are closed per-request)
       httpServer.close(() => {
         process.exit(0);

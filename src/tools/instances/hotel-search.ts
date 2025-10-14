@@ -110,7 +110,7 @@ async function implementation(args: {
   const apiData = (await apiResponse.json()) as { properties?: any[] };
 
   // Map API response to our format (limit to 8 results)
-  const hotels: Hotel[] = (apiData.properties || []).slice(0, 8).map((property: any) => {
+  const hotels: Hotel[] = (apiData.properties || []).map((property: any) => {
     // Create description from location and top amenities
     const location = property.location_data?.address_structured?.city || city;
     const topAmenities = (property.amenities || []).slice(0, 3).join(', ');
@@ -182,6 +182,7 @@ export const hotelSearchTool: ToolDefinition<typeof inputSchema, typeof outputSc
     description: 'Search for hotels in a specified city with optional check-in and check-out dates',
     inputSchema,
     outputSchema,
+    annotations: { readOnlyHint: true },
   },
   implementation,
 };
