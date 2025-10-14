@@ -1,5 +1,3 @@
-import { ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';
-
 /**
  * Configuration for registering a resource with the MCP server
  */
@@ -19,11 +17,14 @@ export interface ResourceConfig {
 }
 
 /**
- * Resource implementation function signature
+ * Resource implementation function signature - returns just the content
+ * URI and mimeType are automatically handled by the framework
+ * For binary data, return base64-encoded string in blob field
  */
-export type ResourceImplementation = (
-  uri: string
-) => Promise<ReadResourceResult>;
+export type ResourceImplementation = () => Promise<{
+  text?: string;
+  blob?: string; // Base64-encoded binary data
+}>;
 
 /**
  * Complete resource definition including configuration and implementation

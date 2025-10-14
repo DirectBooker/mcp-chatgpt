@@ -13,23 +13,13 @@ Create a file `src/resources/your-resource-name.ts` following this pattern:
 ```typescript
 import { ResourceDefinition } from './types.js';
 
-// Resource implementation function
-async function implementation(uri: string): Promise<{
-  contents: Array<{
-    uri: string;
-    mimeType: string;
-    text?: string;
-    blob?: Uint8Array;
-  }>;
+// Resource implementation function - just return the content
+async function implementation(): Promise<{
+  text?: string;
+  blob?: Uint8Array;
 }> {
   return {
-    contents: [
-      {
-        uri: 'your-scheme://your-path',
-        mimeType: 'text/plain', // or 'application/json', 'image/png', etc.
-        text: 'Your resource content here'
-      }
-    ]
+    text: 'Your resource content here'
   };
 }
 
@@ -72,31 +62,28 @@ Your resource will be automatically registered when the server starts. No additi
 ### Text Resources
 For simple text content:
 ```typescript
-{
-  uri: 'dbk-text://example',
-  mimeType: 'text/plain',
+// In implementation function:
+return {
   text: 'Your text content'
-}
+};
 ```
 
 ### JSON Resources
 For structured data:
 ```typescript
-{
-  uri: 'dbk-data://config',
-  mimeType: 'application/json',
+// In implementation function:
+return {
   text: JSON.stringify({ key: 'value' })
-}
+};
 ```
 
 ### Binary Resources
-For binary content:
+For binary content (base64-encoded):
 ```typescript
-{
-  uri: 'dbk-file://image.png',
-  mimeType: 'image/png',
-  blob: new Uint8Array([...])
-}
+// In implementation function:
+return {
+  blob: 'base64-encoded-string-here'
+};
 ```
 
 ## URI Schemes
@@ -126,20 +113,13 @@ async function implementation(uri: string) {
 Resources can be dynamic and change based on parameters or external data:
 
 ```typescript
-async function implementation(uri: string) {
-  // Parse URI parameters
-  const url = new URL(uri);
-  const param = url.searchParams.get('param');
+async function implementation() {
+  // You can still access the URI through the config if needed for dynamic content
+  const currentTime = new Date().toISOString();
   
   // Return dynamic content
   return {
-    contents: [
-      {
-        uri,
-        mimeType: 'text/plain',
-        text: `Dynamic content for param: ${param}`
-      }
-    ]
+    text: `Dynamic content generated at: ${currentTime}`
   };
 }
 ```

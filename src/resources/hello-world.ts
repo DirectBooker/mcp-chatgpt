@@ -1,21 +1,11 @@
 import { ResourceDefinition } from './types.js';
 
-// Resource implementation function
+// Resource implementation function - just return the content
 async function implementation(): Promise<{
-  contents: Array<{
-    uri: string;
-    mimeType: string;
-    text: string;
-  }>;
+  text: string;
 }> {
   return {
-    contents: [
-      {
-        uri: 'dbk-text://hello',
-        mimeType: 'text/plain',
-        text: 'Hello, World from my MCP!!!'
-      }
-    ]
+    text: 'Hello, World from my MCP!!!'
   };
 }
 
