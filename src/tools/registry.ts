@@ -7,7 +7,7 @@ import { ToolDefinition } from './types.js';
  */
 export class ToolRegistry {
   private readonly mcpServer: McpServer;
-  private readonly registeredTools = new Map<string, ToolDefinition<any>>();
+  private readonly registeredTools = new Map<string, ToolDefinition<any, any>>();
 
   constructor(mcpServer: McpServer) {
     this.mcpServer = mcpServer;
@@ -27,17 +27,21 @@ export class ToolRegistry {
     }
 
     // Register with MCP server using the registerTool method
-    const toolConfig: any = {
+    const toolConfig: Record<string, unknown> = {
       description: config.description,
       annotations: config.annotations,
     };
 
+    if (config._meta) {
+      toolConfig['_meta'] = config._meta;
+    }
+
     if (config.inputSchema) {
-      toolConfig.inputSchema = config.inputSchema;
+      toolConfig['inputSchema'] = config.inputSchema;
     }
 
     if (config.outputSchema) {
-      toolConfig.outputSchema = config.outputSchema;
+      toolConfig['outputSchema'] = config.outputSchema;
     }
 
     this.mcpServer.registerTool(config.name, toolConfig, async args => {
@@ -79,14 +83,14 @@ export class ToolRegistry {
     });
 
     // Track registered tools
-    this.registeredTools.set(config.name, tool as ToolDefinition<any>);
+    this.registeredTools.set(config.name, tool as any);
     console.error(`✓ Registered tool: ${config.name}`);
   }
 
   /**
    * Register multiple tools at once
    */
-  registerMultiple(tools: ToolDefinition<any>[]): void {
+  registerMultiple(tools: ToolDefinition<any, any>[]): void {
     for (const tool of tools) {
       this.register(tool);
     }
@@ -102,7 +106,7 @@ export class ToolRegistry {
   /**
    * Get a registered tool by name
    */
-  getTool(name: string): ToolDefinition<any> | undefined {
+  getTool(name: string): ToolDefinition<any, any> | undefined {
     return this.registeredTools.get(name);
   }
 

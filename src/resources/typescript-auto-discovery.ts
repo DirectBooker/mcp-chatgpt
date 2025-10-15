@@ -64,7 +64,7 @@ async function extractFileMetadata(filePath: string): Promise<TypeScriptFileMeta
     }
 
     return metadata;
-  } catch (error) {
+  } catch {
     // If we can't read the file, return empty metadata
     return {};
   }

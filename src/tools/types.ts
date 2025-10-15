@@ -20,6 +20,10 @@ export interface ToolConfig<
   annotations?: {
     [key: string]: unknown;
   };
+  /** Optional metadata for OpenAI and other integrations */
+  _meta?: {
+    [key: string]: unknown;
+  };
 }
 
 /**
