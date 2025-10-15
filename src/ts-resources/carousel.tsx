@@ -1,3 +1,4 @@
+import React from 'react';
 import { createRoot } from 'react-dom/client';
 import useEmblaCarousel from 'embla-carousel-react';
 
@@ -6,22 +7,23 @@ import { useSyncExternalStore } from 'react';
 
 const SET_GLOBALS_EVENT_TYPE = 'openai:set_globals' as const;
 
-function useOpenAiGlobal<K extends keyof any>(key: K) {
+function useOpenAiGlobal<K extends string>(key: K): unknown {
   return useSyncExternalStore(
-    onChange => {
-      const handler = (e: CustomEvent<{ globals: Partial<any> }>) => {
+    (onChange: () => void) => {
+      const handler = (e: CustomEvent<{ globals: Partial<Record<string, unknown>> }>): void => {
         // Only re-render when the updated key is present (host may patch multiple keys)
         if (e.detail.globals[key] !== undefined) onChange();
       };
       window.addEventListener(SET_GLOBALS_EVENT_TYPE, handler as EventListener, { passive: true });
-      return () => window.removeEventListener(SET_GLOBALS_EVENT_TYPE, handler as EventListener);
+      return (): void =>
+        window.removeEventListener(SET_GLOBALS_EVENT_TYPE, handler as EventListener);
     },
     // Snapshot: always read through the proxy (correct source of truth)
-    () => (window as any).openai[key]
+    (): unknown => (window as unknown as { openai: Record<string, unknown> }).openai[key]
   );
 }
 
-function useToolOutput<T = unknown>() {
+function useToolOutput<T = unknown>(): T | null {
   return useOpenAiGlobal('toolOutput') as T | null;
 }
 
@@ -44,11 +46,11 @@ interface HotelType {
   rating: number;
 }
 
-function Foobar() {
+function Foobar(): React.JSX.Element {
   const [emblaRef] = useEmblaCarousel({ dragFree: true });
   console.error(`The embla ref: ${emblaRef}`);
 
-  const toolOutput: { hotels: Array<HotelType> } = useToolOutput<any>();
+  const toolOutput = useToolOutput<{ hotels: Array<HotelType> }>();
   console.log('Frobnitz', toolOutput);
 
   if (toolOutput) {
@@ -73,7 +75,7 @@ interface HotelCardProps {
   hotel: HotelType;
 }
 
-function HotelCard({ hotel }: HotelCardProps) {
+function HotelCard({ hotel }: HotelCardProps): React.JSX.Element {
   return (
     <div
       style={{
@@ -173,7 +175,9 @@ function HotelCard({ hotel }: HotelCardProps) {
             }}
             disabled={!hotel.price_link}
           >
-            <span>{"Book at "} <strong> {` ${hotel.price}`}</strong></span>
+            <span>
+              {'Book at '} <strong> {` ${hotel.price}`}</strong>
+            </span>
           </button>
         </div>
       </div>

@@ -79,8 +79,8 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       // Return HTML with import map and compiled JavaScript
       // TODO(george): remove all of this (possibly commented) debug code.
       return {
-        text: `<script type=\"importmap\">${JSON.stringify(importMap, null, 2)}</script>
-<div id=\"ts-resource-${config.uriId}\" style=\"background-color: #ddd; padding: 1em\">George can hack, tonsils.</div>
+        text: `<script type="importmap">${JSON.stringify(importMap, null, 2)}</script>
+<div id="ts-resource-${config.uriId}" style="background-color: #ddd; padding: 1em">George can hack, tonsils.</div>
 // <script>
 //   // Debug: Check if import map exists in DOM
 //   console.log('=== IMPORT MAP DEBUG ===');

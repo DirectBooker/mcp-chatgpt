@@ -28,7 +28,10 @@ const outputSchema = {
       .object({
         name: z.string().describe('Name of the hotel'),
         price: z.string().describe('Price per night'),
-        price_link: z.string().optional().describe('URL link associated with the price for booking or more details'),
+        price_link: z
+          .string()
+          .optional()
+          .describe('URL link associated with the price for booking or more details'),
         description: z.string().describe('Brief description of the hotel'),
         rating: z.number().min(1).max(5).describe('Hotel rating from 1 to 5 stars'),
         amenities: z.array(z.string()).describe('List of hotel amenities'),
@@ -52,17 +55,47 @@ const outputSchema = {
   searchTimestamp: z.string().describe('ISO timestamp when the search was performed'),
 };
 
+// API response interfaces
+interface ApiResponse {
+  properties?: PropertyData[];
+}
+
+interface PropertyData {
+  name?: string;
+  display_price?: {
+    price?: {
+      price_per_night?: string;
+    };
+    reservation_link?: string;
+  };
+  location_data?: {
+    address_structured?: {
+      city?: string;
+    };
+  };
+  amenities?: string[];
+  review_rating?: number;
+  photos?: Array<{
+    thumbnail_url?: string;
+  }>;
+  'hotel-id'?: number;
+  hotel_id?: number;
+  'property-token'?: string;
+  property_token?: string;
+  token?: string;
+}
+
 // Hotel interface for type safety
 interface Hotel {
   name: string;
   price: string;
-  price_link?: string;
+  price_link?: string | undefined;
   description: string;
   rating: number;
   amenities: string[];
-  'hotel-id'?: number;
+  'hotel-id'?: number | undefined;
   'property-token': string;
-  carousel_image?: string;
+  carousel_image?: string | undefined;
 }
 
 // Tool implementation function
@@ -74,7 +107,7 @@ async function implementation(args: {
   const { city, 'start-date': startDate, 'end-date': endDate } = args;
 
   // Get today's date string in YYYY-MM-DD format (timezone-safe)
-  const todayString = new Date().toISOString().split('T')[0]!;
+  const todayString = new Date().toISOString().split('T')[0] ?? '';
 
   // Validate dates are not in the past (string comparison is timezone-safe)
   if (startDate) {
@@ -115,10 +148,10 @@ async function implementation(args: {
     throw new Error(`API request failed: ${apiResponse.status} ${apiResponse.statusText}`);
   }
 
-  const apiData = (await apiResponse.json()) as { properties?: any[] };
+  const apiData = (await apiResponse.json()) as ApiResponse;
 
   // Map API response to our format (limit to 8 results)
-  const hotels: Hotel[] = (apiData.properties || []).map((property: any) => {
+  const hotels: Hotel[] = (apiData.properties || []).map((property: PropertyData) => {
     // Create description from location and top amenities
     const location = property.location_data?.address_structured?.city || city;
     const topAmenities = (property.amenities || []).slice(0, 3).join(', ');
@@ -183,7 +216,6 @@ async function implementation(args: {
         text: responseText,
       },
     ],
-    // @ts-ignore - structured content for output schema validation
     structuredContent: structuredData,
   };
 }
