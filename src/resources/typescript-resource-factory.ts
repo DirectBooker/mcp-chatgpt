@@ -64,20 +64,50 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       const jsContent = await readFile(jsFilePath, 'utf-8');
 
       // Create import map for React and other dependencies
+      // TODO(george): eliminate the import maps by bundling.
       const importMap = {
         imports: {
-          'react': 'https://esm.sh/react@18',
+          react: 'https://esm.sh/react@18',
           'react/jsx-runtime': 'https://esm.sh/react@18/jsx-runtime',
           'react-dom': 'https://esm.sh/react-dom@18',
-          'react-dom/client': 'https://esm.sh/react-dom@18/client'
-        }
+          'react-dom/client': 'https://esm.sh/react-dom@18/client',
+          'embla-carousel-react': 'https://esm.sh/embla-carousel-react@8.3.1?deps=react@18',
+          'embla-carousel': 'https://esm.sh/embla-carousel@8.3.1',
+        },
       };
 
       // Return HTML with import map and compiled JavaScript
+      // TODO(george): remove all of this (possibly commented) debug code.
       return {
-        text: `<script type="importmap">${JSON.stringify(importMap, null, 2)}</script>
-<div style="color: blue; background-color: white; padding: 1em; border: 1px solid black;">George can hack, tonsils.</div>
-<script type="module">${jsContent}</script>`,
+        text: `<script type=\"importmap\">${JSON.stringify(importMap, null, 2)}</script>
+<div id=\"ts-resource-${config.uriId}\" style=\"background-color: #ddd; padding: 1em\">George can hack, tonsils.</div>
+// <script>
+//   // Debug: Check if import map exists in DOM
+//   console.log('=== IMPORT MAP DEBUG ===');
+//   const importMaps = document.querySelectorAll('script[type="importmap"]');
+//   console.log('Import maps found:', importMaps.length);
+//   importMaps.forEach((map, i) => {
+//     console.log('Import map', i, ':', map.textContent);
+//   });
+//   console.log('Document HTML:', document.documentElement.outerHTML.substring(0, 500));
+//   console.log('========================');
+// </script>
+<script type="module">
+  // Debug: Test import resolution before actual imports
+  // console.log('=== MODULE DEBUG ===');
+  // console.log('About to try importing react/jsx-runtime...');
+  // try {
+  //   const result = await import('react/jsx-runtime');
+  //   console.log('Import successful:', result);
+  // } catch (error) {
+  //   console.error('Import failed:', error.message);
+  //   console.error('Error details:', error);
+  // }
+  // console.log('====================');
+  
+  // Original compiled code follows:
+  ${jsContent}
+</script>`,
       };
     } catch (error) {
       // If files don't exist or can't be read, provide helpful error

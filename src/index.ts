@@ -121,7 +121,7 @@ class MCPChatGPTServer {
   public async start(): Promise<void> {
     // Initialize URL salt for cache busting
     initializeUrlSalt();
-    
+
     // Setup resources with auto-discovery
     await this.setupMCPResources();
 

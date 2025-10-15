@@ -28,6 +28,7 @@ const outputSchema = {
       .object({
         name: z.string().describe('Name of the hotel'),
         price: z.string().describe('Price per night'),
+        price_link: z.string().optional().describe('URL link associated with the price for booking or more details'),
         description: z.string().describe('Brief description of the hotel'),
         rating: z.number().min(1).max(5).describe('Hotel rating from 1 to 5 stars'),
         amenities: z.array(z.string()).describe('List of hotel amenities'),
@@ -55,6 +56,7 @@ const outputSchema = {
 interface Hotel {
   name: string;
   price: string;
+  price_link?: string;
   description: string;
   rating: number;
   amenities: string[];
@@ -130,6 +132,7 @@ async function implementation(args: {
     return {
       name: property.name || 'Unknown Hotel',
       price: property.display_price?.price?.price_per_night || 'Price not available',
+      price_link: property.display_price?.reservation_link || undefined,
       description,
       rating: property.review_rating || 0,
       amenities: property.amenities || [],
@@ -194,11 +197,11 @@ export const hotelSearchTool: ToolDefinition<typeof inputSchema, typeof outputSc
     outputSchema,
     annotations: { readOnlyHint: true },
     _meta: {
-      get "openai/outputTemplate"(): string {
-        return createSaltedUri("carousel");
+      get 'openai/outputTemplate'(): string {
+        return createSaltedUri('carousel');
       },
-      "openai/toolInvocation/invoking": "Displaying the hotel list",
-      "openai/toolInvocation/invoked": "Displayed the hotel list"
+      'openai/toolInvocation/invoking': 'Loading the hotel list',
+      'openai/toolInvocation/invoked': 'Displayed the hotel list',
     },
   },
   implementation,
