@@ -1,56 +1,18 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import useEmblaCarousel from 'embla-carousel-react';
+import { useToolOutput } from '../shared/open-ai-globals';
+import { Hotel } from '../directbooker/types';
 
-// openai-hooks.ts
-import { useSyncExternalStore } from 'react';
+const Carousel = (): React.JSX.Element => {
+  return <HotelCarousel />;
+};
 
-const SET_GLOBALS_EVENT_TYPE = 'openai:set_globals' as const;
-
-function useOpenAiGlobal<K extends string>(key: K): unknown {
-  return useSyncExternalStore(
-    (onChange: () => void) => {
-      const handler = (e: CustomEvent<{ globals: Partial<Record<string, unknown>> }>): void => {
-        // Only re-render when the updated key is present (host may patch multiple keys)
-        if (e.detail.globals[key] !== undefined) onChange();
-      };
-      window.addEventListener(SET_GLOBALS_EVENT_TYPE, handler as EventListener, { passive: true });
-      return (): void =>
-        window.removeEventListener(SET_GLOBALS_EVENT_TYPE, handler as EventListener);
-    },
-    // Snapshot: always read through the proxy (correct source of truth)
-    (): unknown => (window as unknown as { openai: Record<string, unknown> }).openai[key]
-  );
-}
-
-function useToolOutput<T = unknown>(): T | null {
-  return useOpenAiGlobal('toolOutput') as T | null;
-}
-
-/**
- * Simple carousel component with a timestamp message
- *
- * @mcp-name: "Carousel Component"
- * @mcp-description: "A simple div showing when George was here"
- * @mcp-uri: "carousel"
- */
-
-// TODO(george): DRY
-interface HotelType {
-  hotel_id: number;
-  name: string;
-  carousel_image: string;
-  description?: string;
-  price: string;
-  price_link: string;
-  rating: number;
-}
-
-function Foobar(): React.JSX.Element {
+function HotelCarousel(): React.JSX.Element {
   const [emblaRef] = useEmblaCarousel({ dragFree: true });
   console.error(`The embla ref: ${emblaRef}`);
 
-  const toolOutput = useToolOutput<{ hotels: Array<HotelType> }>();
+  const toolOutput = useToolOutput<{ hotels: Array<Hotel> }>();
   console.log('Frobnitz', toolOutput);
 
   if (toolOutput) {
@@ -58,7 +20,7 @@ function Foobar(): React.JSX.Element {
     console.error('the count: ', count);
   }
 
-  const hotels: Array<HotelType> = toolOutput?.hotels || [];
+  const hotels: Array<Hotel> = toolOutput?.hotels || [];
 
   return (
     <div className="embla" ref={emblaRef} style={{ overflow: 'hidden' }}>
@@ -72,7 +34,7 @@ function Foobar(): React.JSX.Element {
 }
 
 interface HotelCardProps {
-  hotel: HotelType;
+  hotel: Hotel;
 }
 
 function HotelCard({ hotel }: HotelCardProps): React.JSX.Element {
@@ -187,7 +149,7 @@ function HotelCard({ hotel }: HotelCardProps): React.JSX.Element {
 
 const element = document.getElementById('ts-resource-carousel');
 if (element) {
-  createRoot(element).render(<Foobar />);
+  createRoot(element).render(<Carousel />);
 } else {
   console.error("Cannot find 'ts-resource-carousel'");
 }

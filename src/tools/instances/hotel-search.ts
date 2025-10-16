@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { ToolDefinition } from '../types.js';
 import { createSaltedUri } from '../../resources/typescript-resource-factory.js';
+import { Hotel } from '../../directbooker/types';
 
 // Input schema for hotel search
 const inputSchema = {
@@ -35,11 +36,11 @@ const outputSchema = {
         description: z.string().describe('Brief description of the hotel'),
         rating: z.number().min(1).max(5).describe('Hotel rating from 1 to 5 stars'),
         amenities: z.array(z.string()).describe('List of hotel amenities'),
-        'hotel-id': z
+        hotel_id: z
           .number()
           .optional()
           .describe('A persistent id for this hotel which can be used with other tools'),
-        'property-token': z
+        property_token: z
           .string()
           .describe(
             'A persistent id for this hotel which can be used with other tools. Prefer the hotel-id field, if present'
@@ -78,24 +79,9 @@ interface PropertyData {
   photos?: Array<{
     thumbnail_url?: string;
   }>;
-  'hotel-id'?: number;
   hotel_id?: number;
-  'property-token'?: string;
   property_token?: string;
   token?: string;
-}
-
-// Hotel interface for type safety
-interface Hotel {
-  name: string;
-  price: string;
-  price_link?: string | undefined;
-  description: string;
-  rating: number;
-  amenities: string[];
-  'hotel-id'?: number | undefined;
-  'property-token': string;
-  carousel_image?: string | undefined;
 }
 
 // Tool implementation function
@@ -169,9 +155,9 @@ async function implementation(args: {
       description,
       rating: property.review_rating || 0,
       amenities: property.amenities || [],
-      'hotel-id': property['hotel-id'] || property.hotel_id || undefined,
-      'property-token':
-        property['property-token'] || property.property_token || property.token || 'unknown',
+      hotel_id: property['hotel_id'] || property.hotel_id || undefined,
+      property_token:
+        property['property_token'] || property.property_token || property.token || 'unknown',
       carousel_image: carouselImage,
     };
   });
