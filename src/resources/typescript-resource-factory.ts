@@ -61,10 +61,24 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       const jsFilePath = join(projectRoot, `dist/ts-resources-bundles/${config.filename}.js`);
 
       // Read the bundled JavaScript content
+      // TODO(george): Cache bundled JS and Tailwind CSS contents per filename and invalidate on file mtime to avoid per-request disk reads.
       const jsContent = await readFile(jsFilePath, 'utf-8');
 
-      // Return minimal HTML that mounts a root div and executes the bundle
+      // Inline Tailwind CSS (no external references)
+      // TODO(george): Generate and inline per-resource Tailwind CSS (e.g., dist/assets/ts-resources/${config.filename}.css)
+      //               by running Tailwind with a narrowed content set for this entry to reduce CSS size.
+      const cssFilePath = join(projectRoot, 'dist/assets/tailwind.css');
+      let cssContent = '';
+      try {
+        cssContent = await readFile(cssFilePath, 'utf-8');
+      } catch {
+        cssContent = '/* tailwind.css not found; run "pnpm run build:css" to generate */';
+      }
+
+      // Return minimal HTML with inlined CSS, root div, and bundled module
       return {
+        text: `<style>${cssContent}</style>
+<div id="ts-resource-${config.uriId}"></div>
         text: `<div id="ts-resource-${config.uriId}"
                 style="background: #ddd; padding: 1em"></div>
 <script type="module">
