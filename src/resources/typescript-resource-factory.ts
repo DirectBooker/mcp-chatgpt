@@ -57,66 +57,28 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       // Use process.cwd() to get the project root
       const projectRoot = process.cwd();
 
-      // Path to the compiled JavaScript file
-      const jsFilePath = join(projectRoot, `dist/ts-resources/${config.filename}.js`);
+      // Path to the bundled JavaScript file
+      const jsFilePath = join(projectRoot, `dist/ts-resources-bundles/${config.filename}.js`);
 
-      // Read the compiled JavaScript content
+      // Read the bundled JavaScript content
       const jsContent = await readFile(jsFilePath, 'utf-8');
 
-      // Create import map for React and other dependencies
-      // TODO(george): eliminate the import maps by bundling.
-      const importMap = {
-        imports: {
-          react: 'https://esm.sh/react@18',
-          'react/jsx-runtime': 'https://esm.sh/react@18/jsx-runtime',
-          'react-dom': 'https://esm.sh/react-dom@18',
-          'react-dom/client': 'https://esm.sh/react-dom@18/client',
-          'embla-carousel-react': 'https://esm.sh/embla-carousel-react@8.3.1?deps=react@18',
-          'embla-carousel': 'https://esm.sh/embla-carousel@8.3.1',
-        },
-      };
-
-      // Return HTML with import map and compiled JavaScript
-      // TODO(george): remove all of this (possibly commented) debug code.
+      // Return minimal HTML that mounts a root div and executes the bundle
       return {
-        text: `<script type="importmap">${JSON.stringify(importMap, null, 2)}</script>
-<div id="ts-resource-${config.uriId}" style="background-color: #ddd; padding: 1em">George can hack, tonsils.</div>
-// <script>
-//   // Debug: Check if import map exists in DOM
-//   console.log('=== IMPORT MAP DEBUG ===');
-//   const importMaps = document.querySelectorAll('script[type="importmap"]');
-//   console.log('Import maps found:', importMaps.length);
-//   importMaps.forEach((map, i) => {
-//     console.log('Import map', i, ':', map.textContent);
-//   });
-//   console.log('Document HTML:', document.documentElement.outerHTML.substring(0, 500));
-//   console.log('========================');
-// </script>
+        text: `<div id="ts-resource-${config.uriId}"
+                style="background: #ddd; padding: 1em"></div>
 <script type="module">
-  // Debug: Test import resolution before actual imports
-  // console.log('=== MODULE DEBUG ===');
-  // console.log('About to try importing react/jsx-runtime...');
-  // try {
-  //   const result = await import('react/jsx-runtime');
-  //   console.log('Import successful:', result);
-  // } catch (error) {
-  //   console.error('Import failed:', error.message);
-  //   console.error('Error details:', error);
-  // }
-  // console.log('====================');
-  
-  // Original compiled code follows:
-  ${jsContent}
+${jsContent}
 </script>`,
       };
     } catch (error) {
       // If files don't exist or can't be read, provide helpful error
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-      const errorText = `// Error: Failed to read compiled JavaScript for ${config.filename}
+      const errorText = `// Error: Failed to read bundled JavaScript for ${config.filename}
 // ${errorMessage}
-// Hint: Make sure to run "pnpm run build" to compile TypeScript files
-// Expected file: dist/ts-resources/${config.filename}.js`;
+// Hint: Run "pnpm run build:ts-resources" or "pnpm run build" to create bundles
+// Expected file: dist/ts-resources-bundles/${config.filename}.js`;
 
       return {
         text: errorText,
