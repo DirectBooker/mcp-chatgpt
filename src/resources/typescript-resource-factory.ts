@@ -65,7 +65,8 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
 
       // Return minimal HTML that mounts a root div and executes the bundle
       return {
-        text: `<div id="ts-resource-${config.uriId}"></div>
+        text: `<div id="ts-resource-${config.uriId}"
+                style="background: #ddd; padding: 1em"></div>
 <script type="module">
 ${jsContent}
 </script>`,
