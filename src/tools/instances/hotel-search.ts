@@ -49,6 +49,8 @@ const outputSchema = {
           .string()
           .optional()
           .describe('Thumbnail image URL for the hotel, if available'),
+        latitude: z.number().optional().describe('Latitude in decimal degrees'),
+        longitude: z.number().optional().describe('Longitude in decimal degrees'),
       })
       .describe('Individual hotel information')
   ),
@@ -82,6 +84,10 @@ interface PropertyData {
   hotel_id?: number;
   property_token?: string;
   token?: string;
+  gps_coordinates?: {
+    latitude?: number | string;
+    longitude?: number | string;
+  };
 }
 
 // Tool implementation function
@@ -136,6 +142,14 @@ async function implementation(args: {
 
   const apiData = (await apiResponse.json()) as ApiResponse;
 
+  // Helper to safely convert possible string/number to number
+  const toNumber = (v: number | string | undefined): number | undefined => {
+    if (v === undefined) return undefined;
+    if (typeof v === 'number') return v;
+    const n = Number(v);
+    return Number.isNaN(n) ? undefined : n;
+  };
+
   // Map API response to our format (limit to 8 results)
   const hotels: Hotel[] = (apiData.properties || []).map((property: PropertyData) => {
     // Create description from location and top amenities
@@ -159,6 +173,8 @@ async function implementation(args: {
       property_token:
         property['property_token'] || property.property_token || property.token || 'unknown',
       carousel_image: carouselImage,
+      latitude: toNumber(property.gps_coordinates?.latitude),
+      longitude: toNumber(property.gps_coordinates?.longitude),
     };
   });
 

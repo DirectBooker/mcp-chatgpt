@@ -8,4 +8,6 @@ export interface Hotel {
   rating: number;
   amenities: string[];
   carousel_image?: string | undefined;
+  latitude?: number | undefined;
+  longitude?: number | undefined;
 }

@@ -7,9 +7,9 @@
   "scripts": {
     "build": "tsc && node scripts/build-ts-resources.mjs && pnpm run build:css",
     "build:ts-resources": "node scripts/build-ts-resources.mjs",
-    "build:css": "pnpm exec tailwindcss -i src/styles/tailwind.css -o dist/assets/tailwind.css --minify",
+    "build:css": "pnpm exec tailwindcss -c tailwind.config.js -i src/styles/tailwind.css -o dist/assets/tailwind.css --minify",
     "watch:ts-resources": "node scripts/watch-ts-resources.mjs",
-    "watch:css": "pnpm exec tailwindcss -i src/styles/tailwind.css -o dist/assets/tailwind.css -w",
+    "watch:css": "pnpm exec tailwindcss -c tailwind.config.js -i src/styles/tailwind.css -o dist/assets/tailwind.css -w",
     "dev": "concurrently -k -n server,bundles,css -c blue,magenta,green \"pnpm:dev:server\" \"pnpm:watch:ts-resources\" \"pnpm:watch:css\"",
     "dev:server": "tsx watch src/index.ts",
     "start": "node dist/index.js",
@@ -30,11 +30,14 @@
   "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "clsx": "^2.1.1",
     "cors": "^2.8.5",
     "embla-carousel-react": "^8.6.0",
     "express": "^4.18.2",
+    "mapbox-gl": "^3.15.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-router-dom": "^7.9.4",
     "zod": "^3.22.4"
   },
   "devDependencies": {
