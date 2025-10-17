@@ -50,6 +50,12 @@ class MCPChatGPTServer {
 
     this.app.use(express.json());
 
+    // Basic request logging (stderr to avoid MCP stdout interference)
+    this.app.use((req, _res, next) => {
+      console.error(`[HTTP] ${req.method} ${req.originalUrl}`);
+      next();
+    });
+
     // Serve static assets (e.g., Tailwind CSS)
     this.app.use('/assets', express.static(join(process.cwd(), 'dist/assets')));
 
@@ -88,6 +94,33 @@ class MCPChatGPTServer {
         });
 
         await this.mcpServer.connect(transport);
+
+        // Log JSON-RPC method if available (single or batch)
+        const body: unknown = req.body as unknown;
+        if (Array.isArray(body)) {
+          const methods = body
+            .map(item => {
+              if (item && typeof item === 'object') {
+                return (item as { method?: string }).method;
+              }
+              return undefined;
+            })
+            .filter(Boolean) as string[];
+          if (methods.length) {
+            console.error(`[MCP] RPC batch: ${methods.join(', ')}`);
+          } else {
+            console.error('[MCP] RPC batch request received');
+          }
+        } else if (body && typeof body === 'object') {
+          const method = (body as { method?: string; id?: string | number }).method;
+          const id = (body as { id?: string | number }).id;
+          if (method) {
+            console.error(`[MCP] RPC: ${method}${id !== undefined ? ` id=${String(id)}` : ''}`);
+          } else {
+            console.error('[MCP] RPC request received');
+          }
+        }
+
         await transport.handleRequest(req, res, req.body);
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
