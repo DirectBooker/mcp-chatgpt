@@ -4,6 +4,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import express from 'express';
 import cors from 'cors';
+import { join } from 'path';
 import { ToolRegistry, availableTools } from './tools/index.js';
 import { ResourceRegistry, getAvailableResources } from './resources/index.js';
 import { initializeUrlSalt } from './resources/typescript-resource-factory.js';
@@ -48,6 +49,9 @@ class MCPChatGPTServer {
     );
 
     this.app.use(express.json());
+
+    // Serve static assets (e.g., Tailwind CSS)
+    this.app.use('/assets', express.static(join(process.cwd(), 'dist/assets')));
 
     // Health check endpoint
     this.app.get('/health', (_req, res) => {

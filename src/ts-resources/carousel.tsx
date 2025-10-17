@@ -119,6 +119,7 @@ function HotelCard({ hotel }: HotelCardProps): React.JSX.Element {
                 window.open(hotel.price_link, '_blank', 'noopener,noreferrer');
               }
             }}
+            //className="cursor-pointer inline-flex items-center rounded-full bg-[#F46C21] text-white px-4 py-1.5 text-sm font-medium hover:opacity-90 active:opacity-100"
             style={{
               cursor: hotel.price_link ? 'pointer' : 'default',
               display: 'inline-flex',
