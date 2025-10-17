@@ -25,8 +25,14 @@ let urlSalt: string | null = null;
  * Initialize the URL salt for cache busting
  */
 export function initializeUrlSalt(): void {
-  urlSalt = Date.now().toString();
-  console.error(`✓ TypeScript resource URL salt initialized: ${urlSalt}`);
+  const envSalt = process.env['TS_SALT'];
+  if (envSalt && envSalt.length > 0) {
+    urlSalt = envSalt;
+    console.error(`✓ TypeScript resource URL salt initialized from TS_SALT env var`);
+  } else {
+    urlSalt = Date.now().toString();
+    console.error(`✓ TypeScript resource URL salt initialized from app start time: ${urlSalt}`);
+  }
 }
 
 /**

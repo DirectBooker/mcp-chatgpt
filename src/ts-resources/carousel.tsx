@@ -10,16 +10,8 @@ const Carousel = (): React.JSX.Element => {
 
 function HotelCarousel(): React.JSX.Element {
   const [emblaRef] = useEmblaCarousel({ dragFree: true });
-  console.error(`The embla ref: ${emblaRef}`);
 
   const toolOutput = useToolOutput<{ hotels: Array<Hotel> }>();
-  console.log('Frobnitz', toolOutput);
-
-  if (toolOutput) {
-    const count = (toolOutput.hotels as Array<unknown>).length;
-    console.error('the count: ', count);
-  }
-
   const hotels: Array<Hotel> = toolOutput?.hotels || [];
 
   return (
