@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react';
 
 const SET_GLOBALS_EVENT_TYPE = 'openai:set_globals' as const;
 
-export function useOpenAiGlobal<K extends string>(key: K): unknown {
+function useOpenAiGlobal<K extends string>(key: K): unknown {
   return useSyncExternalStore(
     (onChange: () => void) => {
       const handler = (e: CustomEvent<{ globals: Partial<Record<string, unknown>> }>): void => {
@@ -23,6 +23,10 @@ export function useToolOutput<T = unknown>(): T | null {
   return useOpenAiGlobal('toolOutput') as T | null;
 }
 
-export const useMaxHeight = (): number | null => {
-  return useOpenAiGlobal('maxHeight') as number | null;
+export const useMaxHeight = (): number | undefined => {
+  return useOpenAiGlobal('maxHeight') as number | undefined;
 };
+
+export const useDisplayMode = (): string => {
+  return useOpenAiGlobal('displayMode') as string;
+}

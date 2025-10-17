@@ -1,7 +1,6 @@
 import React, { RefObject, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import mapboxgl, { EasingOptions, Map as MapboxMap } from 'mapbox-gl';
-import clsx from 'clsx';
 import {
   useNavigate,
   //useLocation,
@@ -11,8 +10,9 @@ import {
   Outlet,
   NavigateFunction,
 } from 'react-router-dom';
-import { useMaxHeight, useOpenAiGlobal } from '../shared/open-ai-globals';
+import { useDisplayMode, useMaxHeight, useToolOutput } from '../shared/open-ai-globals';
 import { Hotel } from '../directbooker/types';
+import { HotelDescription, HotelPriceButton, HotelRating, HotelTitle } from '../components/hotels';
 
 // TODO(george): Move to env var or config. DO NOT COMMIT WITH REAL TOKEN.
 mapboxgl.accessToken =
@@ -37,45 +37,10 @@ const HotelPopup = (props: { hotel: Hotel }): React.JSX.Element => {
   // TODO(george): this duplicates the button. You should make a shared component.
   return (
     <>
-      <div
-        className={clsx('font-bold', 'text-lg', 'text-black', 'bg-white', 'p-2', 'pt-3', 'pb-1')}
-      >
-        {hotel.name}
-      </div>
-      <div className="p-2 pt-0">Rating: {hotel.rating}</div>
-      {hotel.description ? <div className="px-2 pt-0">{hotel.description}</div> : null}
-      <div style={{ marginTop: '1.25rem' }}>
-        <button
-          type="button"
-          onClick={() => {
-            if (hotel.price_link) {
-              window.open(hotel.price_link, '_blank', 'noopener,noreferrer');
-            }
-          }}
-          //className="cursor-pointer inline-flex items-center rounded-full bg-[#F46C21] text-white px-4 py-1.5 text-sm font-medium hover:opacity-90 active:opacity-100"
-          style={{
-            cursor: hotel.price_link ? 'pointer' : 'default',
-            display: 'inline-flex',
-            alignItems: 'center',
-            borderRadius: 9999,
-            backgroundColor: hotel.price_link ? '#F46C21' : '#cccccc',
-            color: '#fff',
-            paddingLeft: '1rem',
-            paddingRight: '1rem',
-            paddingTop: '0.375rem',
-            paddingBottom: '0.375rem',
-            fontSize: '0.875rem',
-            lineHeight: '1.25rem',
-            fontWeight: 500,
-            opacity: hotel.price_link ? 1 : 0.6,
-          }}
-          disabled={!hotel.price_link}
-        >
-          <span>
-            {'Book at '} <strong> {` ${hotel.price}`}</strong>
-          </span>
-        </button>
-      </div>
+      <HotelTitle hotel={hotel} />
+      <HotelRating hotel={hotel} />
+      <HotelDescription hotel={hotel} />
+      <HotelPriceButton hotel={hotel} />
     </>
   );
 };
@@ -156,11 +121,11 @@ const HotelMap = (): React.JSX.Element => {
   const mapRef = useRef<HTMLDivElement | null>(null);
   const mapObj = useRef<MapboxMap | null>(null);
   const markerObjs = useRef<Array<mapboxgl.Marker>>([]);
-  const displayMode = useOpenAiGlobal('displayMode') as string;
-  const maxHeight = useMaxHeight() ?? undefined;
+  const displayMode = useDisplayMode();
+  const maxHeight = useMaxHeight();
   const navigate: NavigateFunction = useNavigate();
 
-  const toolOutput = useOpenAiGlobal('toolOutput');
+  const toolOutput = useToolOutput();
   const hotels = (toolOutput as { hotels: Array<Hotel> }).hotels as Array<Hotel> | undefined;
   const markerCoords = (hotels || [])
     .map(h => [h.longitude, h.latitude])
@@ -222,8 +187,8 @@ const HotelMap = (): React.JSX.Element => {
           ref={mapRef}
           className="w-full h-full relative absolute bottom-0 left-0 right-0"
           style={{
-            maxHeight,
-            height: displayMode === 'fullscreen' ? maxHeight : undefined,
+            maxHeight: maxHeight ?? undefined,
+            height: displayMode === 'fullscreen' ? (maxHeight ?? undefined) : undefined,
           }}
         />
       </div>
