@@ -34,6 +34,8 @@ export class ResourceRegistry {
         ...config.annotations,
       },
       async () => {
+        // Log resource read (stderr)
+        console.error(`[MCP] resources/read ${config.uri}`);
         try {
           const content = await implementation();
 

@@ -45,6 +45,9 @@ export class ToolRegistry {
     }
 
     this.mcpServer.registerTool(config.name, toolConfig, async args => {
+      // Log tool invocation (stderr)
+      console.error(`[MCP] tools/call ${config.name}`);
+
       try {
         // Validate and parse input arguments using the tool's schema
         let parsedArgs: unknown = args;
