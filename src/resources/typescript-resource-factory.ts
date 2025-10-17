@@ -78,8 +78,7 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       // Return minimal HTML with inlined CSS, root div, and bundled module
       return {
         text: `<style>${cssContent}</style>
-<div id="ts-resource-${config.uriId}"></div>
-        text: `<div id="ts-resource-${config.uriId}"
+        <div id="ts-resource-${config.uriId}"
                 style="background: #ddd; padding: 1em"></div>
 <script type="module">
 ${jsContent}
