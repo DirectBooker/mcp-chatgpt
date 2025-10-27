@@ -34,7 +34,7 @@ const outputSchema = {
           .optional()
           .describe('URL link associated with the price for booking or more details'),
         description: z.string().describe('Brief description of the hotel'),
-        rating: z.number().min(1).max(5).describe('Hotel rating from 1 to 5 stars'),
+        rating: z.number().min(0).max(5).describe('Hotel rating from 1 to 5 stars. A value of 0 means that rating information wasn\'t available for this property.'),
         amenities: z.array(z.string()).describe('List of hotel amenities'),
         hotel_id: z
           .number()

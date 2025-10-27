@@ -85,7 +85,7 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       return {
         text: `<style>${cssContent}</style>
         <div id="ts-resource-${config.uriId}"
-                style="background: #ddd; padding: 1em"></div>
+                style="background: #ddd; padding: 1em">Developer preview</div>
 <script type="module">
 ${jsContent}
 </script>`,
