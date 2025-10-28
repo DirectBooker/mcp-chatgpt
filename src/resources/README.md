@@ -1,14 +1,32 @@
 # MCP Resources Framework
 
-This directory contains a framework for easily adding MCP resources with minimal boilerplate.
+This directory manages static and auto-discovered MCP resources. Resources can be either:
 
-## Adding a New Resource
+1. **Static resources** - Defined in `instances/` and manually registered
+2. **TypeScript/React resources** - Automatically discovered from `src/ts-resources/` and served as HTML via MCP
 
-To add a new resource, follow these steps:
+## Auto-Discovered TypeScript Resources
 
-### 1. Create a new resource file
+The recommended approach. Drop a `.ts` or `.tsx` file in `src/ts-resources/` with optional metadata:
 
-Create a file `src/resources/your-resource-name.ts` following this pattern:
+```typescript
+/**
+ * @mcp-name: "Display Name"
+ * @mcp-description: "What this resource shows"
+ * @mcp-uri: "custom-uri-id"
+ */
+// Your React/TypeScript component here
+```
+
+It will be bundled, inlined with Tailwind CSS, and served automatically as `dbk-ts://filename?salt=<version>`.
+
+## Adding a Static Resource
+
+For non-TypeScript resources, follow these steps:
+
+### 1. Create a resource file
+
+Create a file `src/resources/instances/your-resource-name.ts` following this pattern:
 
 ```typescript
 import { ResourceDefinition } from './types.js';
@@ -37,20 +55,17 @@ export const yourResourceName: ResourceDefinition = {
 
 ### 2. Add to the resources index
 
-In `src/resources/index.ts`, add your resource:
+In `src/resources/index.ts`, add your resource to the `staticResources` array:
 
 ```typescript
 // Import your new resource
-import { yourResourceName } from './your-resource-name.js';
+import { yourResourceName } from './instances/your-resource-name.js';
 
-// Add to the availableResources array
-export const availableResources = [
+// In getAvailableResources():
+const staticResources = [
   helloWorldResource,
   yourResourceName, // <-- Add this line
 ];
-
-// Re-export for direct import
-export { helloWorldResource, yourResourceName };
 ```
 
 ### 3. That's it!

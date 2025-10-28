@@ -1,26 +1,30 @@
 # Tools Directory
 
-This directory contains all MCP tools for the server. Each tool is implemented in its own file and automatically registered with the server.
+This directory contains MCP tool definitions for the server. Tools are automatically registered at startup via the `ToolRegistry`.
 
 ## 📁 Directory Structure
 
 ```
 src/tools/
-├── README.md          # This documentation
-├── types.ts           # Common interfaces and types
-├── registry.ts        # Tool registration system
-├── index.ts           # Tool exports and registry
-├── the-tool.ts        # Example tool implementation
-└── your-new-tool.ts   # Your new tools go here
+├── README.md              # This documentation
+├── types.ts               # Tool definition interfaces
+├── registry.ts            # ToolRegistry class for MCP registration
+├── index.ts               # Tool exports and availableTools array
+└── instances/
+    └── hotel-search.ts    # Example: hotel search tool with hotel carousel
 ```
+
+## Current Tools
+
+- **hotel-search**: Searches for hotels by city with optional check-in/check-out dates. Returns structured hotel data and triggers carousel display via OpenAI output template.
 
 ## 🛠️ Adding a New Tool
 
-Adding a new tool is simple and requires only 2 steps:
+Adding a new tool requires 2 steps:
 
 ### Step 1: Create Your Tool File
 
-Create a new file `src/tools/your-tool-name.ts`:
+Create a new file `src/tools/instances/your-tool-name.ts`:
 
 ```typescript
 import { z } from 'zod';
@@ -80,11 +84,11 @@ Add your tool to `src/tools/index.ts`:
 
 ```typescript
 // Import your new tool
-import { yourTool } from './your-tool-name.js';
+import { yourTool } from './instances/your-tool-name.js';
 
 // Add it to the availableTools array
 export const availableTools = [
-  theTool,
+  hotelSearchTool,
   yourTool,  // Add your tool here
 ];
 ```
