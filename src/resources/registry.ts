@@ -37,26 +37,27 @@ export class ResourceRegistry {
         // Log resource read (stderr)
         console.error(`[MCP] resources/read ${config.uri}`);
         try {
-          const content = await implementation();
+          const contentData = await implementation();
 
-          // Create MCP-compliant content object
-          const contentObj: any = {
+          // Create MCP-compliant content object (text or blob required)
+          const base = {
             uri: config.uri,
             mimeType: config.mimeType,
           };
 
-          // Add either text or blob, ensuring one is present
-          if (content.text !== undefined) {
-            contentObj.text = content.text;
-          } else if (content.blob !== undefined) {
-            contentObj.blob = content.blob;
-          } else {
-            contentObj.text = ''; // Default to empty text if neither provided
+          if (contentData.text !== undefined) {
+            return {
+              contents: [{ ...base, text: contentData.text }],
+            };
           }
 
-          return {
-            contents: [contentObj],
-          };
+          if (contentData.blob !== undefined) {
+            return {
+              contents: [{ ...base, blob: contentData.blob }],
+            };
+          }
+
+          throw new Error(`Resource ${config.uri} returned neither text nor blob`);
         } catch (error: unknown) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           throw new Error(`Error reading resource ${config.uri}: ${errorMessage}`);

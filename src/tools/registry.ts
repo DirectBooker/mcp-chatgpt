@@ -7,7 +7,7 @@ import { ToolDefinition } from './types.js';
  */
 export class ToolRegistry {
   private readonly mcpServer: McpServer;
-  private readonly registeredTools = new Map<string, ToolDefinition<any, any>>();
+  private readonly registeredTools = new Map<string, ToolDefinition<ZodRawShape, ZodRawShape>>();
 
   constructor(mcpServer: McpServer) {
     this.mcpServer = mcpServer;
@@ -86,14 +86,19 @@ export class ToolRegistry {
     });
 
     // Track registered tools
-    this.registeredTools.set(config.name, tool as any);
+    this.registeredTools.set(
+      config.name,
+      tool as unknown as ToolDefinition<ZodRawShape, ZodRawShape>
+    );
     console.error(`✓ Registered tool: ${config.name}`);
   }
 
   /**
    * Register multiple tools at once
    */
-  registerMultiple(tools: ToolDefinition<any, any>[]): void {
+  registerMultiple<TInputSchema extends ZodRawShape, TOutputSchema extends ZodRawShape>(
+    tools: ToolDefinition<TInputSchema, TOutputSchema>[]
+  ): void {
     for (const tool of tools) {
       this.register(tool);
     }
@@ -109,7 +114,7 @@ export class ToolRegistry {
   /**
    * Get a registered tool by name
    */
-  getTool(name: string): ToolDefinition<any, any> | undefined {
+  getTool(name: string): ToolDefinition<ZodRawShape, ZodRawShape> | undefined {
     return this.registeredTools.get(name);
   }
 
