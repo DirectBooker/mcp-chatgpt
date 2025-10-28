@@ -90,6 +90,34 @@ There are two paths:
 - Cache-busting: Each URI includes a `salt` from `TS_SALT` or app start time (`createSaltedUri()`), ensuring fresh loads when output templates change.
 - React hooks: `src/shared/open-ai-globals.ts` exposes `useToolOutput`, `useMaxHeight`, and `useDisplayMode` by reading a `window.openai` global updated by the host; components inside resources can render against live tool output.
 
+## TypeScript resource salt (cache-busting)
+The “salt” is appended to TypeScript resource URIs as a query param, for example: `dbk-ts://carousel?salt=<value>`. Changing the salt forces clients to reload the HTML/JS so you don’t serve stale bundles.
+
+- Source of truth: `initializeUrlSalt()` in `src/resources/typescript-resource-factory.ts`.
+  - If `TS_SALT` is set, that value is used.
+  - Otherwise, the salt defaults to the server start timestamp.
+- Where it’s used: `createSaltedUri(id)` generates salted URIs for resources and output templates (e.g., a tool can return `dbk-ts://carousel?...`).
+- Why set `TS_SALT`:
+  - Deterministic URIs per release (stable across restarts).
+  - Consistent URIs across multiple replicas behind a load balancer.
+  - Intentional cache busts when you deploy new UI bundles.
+- Recommended values: a deploy/version identifier such as a Git SHA, release tag, or a timestamp you control.
+
+Examples
+```sh path=null start=null
+# Stable per-deploy using the short Git SHA
+TS_SALT=$(git rev-parse --short HEAD) pnpm start
+
+# Explicit version string
+TS_SALT=v1.2.3 pnpm start
+
+# One-off cache bust
+TS_SALT=$(date +%s) pnpm start
+```
+Notes
+- If `TS_SALT` is unset, restarting the server changes the salt (new URIs), which is convenient in local dev.
+- In multi-instance deployments, set the same `TS_SALT` on all instances to avoid mismatched URIs being advertised.
+
 ## Build process
 - `pnpm build` runs:
   - `tsc` to `dist/`
