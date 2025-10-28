@@ -45,18 +45,11 @@ export const HotelDescription = ({ hotel }: { hotel: Hotel }): React.JSX.Element
 export const HotelImage = ({ hotel }: { hotel: Hotel }): React.JSX.Element => {
   // TODO(george): Add image fallback
   return (
-    <div style={{ width: '100%' }}>
+    <div className="w-full">
       <img
         src={hotel.carousel_image}
         alt={hotel.name}
-        style={{
-          width: '100%',
-          maxWidth: '35vw',
-          aspectRatio: '1/1',
-          borderRadius: '1rem',
-          objectFit: 'cover',
-          boxShadow: '0 0 0 1px rgba(0, 0, 0, 0.05)',
-        }}
+        className="w-full max-w-[35vw] aspect-square rounded-2xl object-cover ring-1 ring-black/5"
       />
     </div>
   );
@@ -64,7 +57,7 @@ export const HotelImage = ({ hotel }: { hotel: Hotel }): React.JSX.Element => {
 
 export const HotelPriceButton = ({ hotel }: { hotel: Hotel }): React.JSX.Element => {
   return (
-    <div style={{ marginTop: '1.25rem' }}>
+    <div className="mt-5">
       <button
         type="button"
         onClick={() => {

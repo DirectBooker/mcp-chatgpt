@@ -22,8 +22,8 @@ function HotelCarousel(): React.JSX.Element {
   const hotels: Array<Hotel> = toolOutput?.hotels || [];
 
   return (
-    <div className="embla" ref={emblaRef} style={{ overflow: 'hidden' }}>
-      <div className="embla__container" style={{ display: 'flex' }}>
+    <div className="embla overflow-hidden" ref={emblaRef}>
+      <div className="embla__container flex">
         {hotels.slice(0, 10).map(hotel => (
           <HotelCard key={hotel.hotel_id} hotel={hotel} />
         ))}
@@ -38,15 +38,7 @@ interface HotelCardProps {
 
 function HotelCard({ hotel }: HotelCardProps): React.JSX.Element {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        userSelect: 'none',
-        flex: '0 0 35vw',
-        margin: '0 0.5em',
-      }}
-    >
+    <div className="flex flex-col select-none flex-[0_0_35vw] mx-2">
       <HotelImage hotel={hotel} />
       <div className="flex flex-col flex-1 mt-3 flex-auto combined">
         <HotelTitle hotel={hotel} />
