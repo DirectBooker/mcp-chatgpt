@@ -82,13 +82,17 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       }
 
       // Return minimal HTML with inlined CSS, root div, and bundled module
+      // Inject Mapbox token from environment if provided
+      const token = process.env['MAPBOX_TOKEN'];
+      const injectTokenScript = token
+        ? `<script>window.DBK_MAPBOX_TOKEN = ${JSON.stringify(token)};</script>`
+        : '';
+
       return {
         text: `<style>${cssContent}</style>
-        <div id="ts-resource-${config.uriId}"
-                style="background: #ddd; padding: 1em">Developer preview</div>
-<script type="module">
-${jsContent}
-</script>`,
+        <div id=\"ts-resource-${config.uriId}\"\n                style=\"background: #ddd; padding: 1em\">Developer preview</div>
+${injectTokenScript}
+<script type=\"module\">\n${jsContent}\n</script>`,
       };
     } catch (error) {
       // If files don't exist or can't be read, provide helpful error

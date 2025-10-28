@@ -1,6 +1,12 @@
 import React, { RefObject, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import mapboxgl, { EasingOptions, Map as MapboxMap } from 'mapbox-gl';
+
+declare global {
+  interface Window {
+    DBK_MAPBOX_TOKEN?: string;
+  }
+}
 import {
   useNavigate,
   //useLocation,
@@ -14,9 +20,7 @@ import { useDisplayMode, useMaxHeight, useToolOutput } from '../shared/open-ai-g
 import { Hotel } from '../directbooker/types';
 import { HotelDescription, HotelPriceButton, HotelRating, HotelTitle } from '../components/hotels';
 
-// TODO(george): Move to env var or config. DO NOT COMMIT WITH REAL TOKEN.
-mapboxgl.accessToken =
-  'pk.eyJ1IjoiZ21hZHJpZCIsImEiOiJjbWd1Y2ZoZHgwZTU1MnJwdHdrYWFkMGt6In0.H01aopzSaKcxwDSEObjDnw';
+// Mapbox access token is injected into window.DBK_MAPBOX_TOKEN by the server at render time.
 
 const fitMapToMarkers = (map: MapboxMap | null, coords: [number, number][]): void => {
   if (!map || !coords.length) return;
@@ -139,6 +143,12 @@ const HotelMap = (): React.JSX.Element => {
 
   useEffect(() => {
     if (mapObj.current || !mapRef.current) return;
+    const token = window.DBK_MAPBOX_TOKEN;
+    if (!token) {
+      console.error('Mapbox token not configured');
+      return;
+    }
+    mapboxgl.accessToken = token;
     mapObj.current = new mapboxgl.Map({
       container: mapRef.current,
       style: 'mapbox://styles/mapbox/streets-v12',

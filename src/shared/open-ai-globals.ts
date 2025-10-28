@@ -29,4 +29,4 @@ export const useMaxHeight = (): number | undefined => {
 
 export const useDisplayMode = (): string => {
   return useOpenAiGlobal('displayMode') as string;
-}
+};
