@@ -8,7 +8,7 @@ function isDebugEnabled(): boolean {
     const g = globalThis as unknown as {
       process?: { env?: Record<string, string | undefined> };
     };
-    const dbg = g.process?.env?.DEBUG;
+    const dbg = g.process?.env?.['DEBUG'];
     return typeof dbg === 'string' && dbg.length > 0;
   } catch {
     return false;

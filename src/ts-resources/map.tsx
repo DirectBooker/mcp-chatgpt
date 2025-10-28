@@ -165,12 +165,28 @@ const HotelMap = (): React.JSX.Element => {
     });
 
     updateMarkers(mapObj, markerObjs, hotels, navigate, displayMode);
-    setTimeout(() => {
+    const fitTimer = window.setTimeout(() => {
       fitMapToMarkers(mapObj.current, markerCoords);
     }, 0);
 
     // TODO(george): add animation and resizing handling
-    // TODO(george): cleanup on unmount
+    return () => {
+      // Clear pending timer
+      clearTimeout(fitTimer);
+      // Close popups and remove markers
+      markerObjs.current.forEach(marker => {
+        try {
+          marker.getPopup()?.remove();
+        } catch {}
+        marker.remove();
+      });
+      markerObjs.current = [];
+      // Remove map instance
+      if (mapObj.current) {
+        mapObj.current.remove();
+        mapObj.current = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
