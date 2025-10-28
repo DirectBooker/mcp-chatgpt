@@ -150,12 +150,8 @@ function mapPropertiesToHotels(apiData: ApiResponse, fallbackCity: string): Hote
       description,
       rating: property.review_rating || 0,
       amenities: property.amenities || [],
-      hotel_id: property.hotel_id ?? (property as { hotel_id?: number })?.hotel_id ?? undefined,
-      property_token:
-        property.property_token ??
-        property.token ??
-        (property as { property_token?: string })?.property_token ??
-        'unknown',
+      hotel_id: property.hotel_id,
+      property_token: property.property_token ?? property.token ?? 'unknown',
       carousel_image: carouselImage,
       latitude: toNumber(property.gps_coordinates?.latitude),
       longitude: toNumber(property.gps_coordinates?.longitude),
