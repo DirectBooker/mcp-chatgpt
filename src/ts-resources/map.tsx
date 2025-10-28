@@ -1,7 +1,7 @@
 import React, { RefObject, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import mapboxgl, { EasingOptions, Map as MapboxMap } from 'mapbox-gl';
-import clsx from 'clsx';
+import { mapWrapperClasses, rootContainerClasses } from '../shared/classnames';
 
 declare global {
   interface Window {
@@ -23,21 +23,7 @@ import { HotelDescription, HotelPriceButton, HotelRating, HotelTitle } from '../
 
 // Mapbox access token is injected into window.DBK_MAPBOX_TOKEN by the server at render time.
 
-const getRootClasses = (displayMode: string): string =>
-  clsx(
-    'relative antialiased w-full min-h-[480px] overflow-hidden pt-4',
-    displayMode === 'fullscreen'
-      ? 'rounded-none border-0'
-      : 'border border-black/10 dark:border-white/10 rounded-2xl sm:rounded-3xl'
-  );
-
-const getMapWrapperClasses = (displayMode: string): string =>
-  clsx(
-    'absolute inset-0 overflow-hidden',
-    displayMode === 'fullscreen'
-      ? 'md:left-[340px] md:right-4 md:top-4 md:bottom-4 border border-black/10 md:rounded-3xl'
-      : 'w-full h-full bg-red-200'
-  );
+// class helpers moved to shared/classnames.ts
 
 const fitMapToMarkers = (map: MapboxMap | null, coords: [number, number][]): void => {
   if (!map || !coords.length) return;
@@ -190,16 +176,12 @@ const HotelMap = (): React.JSX.Element => {
 
   // TODO(george): Find a better way to sync the version of the CSS with the version of mapbox-gl.
   return (
-    <div
-      className={getRootClasses(displayMode)}
-    >
+    <div className={rootContainerClasses(displayMode)}>
       <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/v3.15.0/mapbox-gl.css" />
       <Outlet />
       {/* Map */}
       {/* TODO(george): w-full h-full and background color are for debugging. remove them. */}
-      <div
-        className={getMapWrapperClasses(displayMode)}
-      >
+      <div className={mapWrapperClasses(displayMode)}>
         <div
           ref={mapRef}
           className="w-full h-full relative absolute bottom-0 left-0 right-0"

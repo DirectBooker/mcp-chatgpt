@@ -1,5 +1,6 @@
 import React from 'react';
 import { Hotel } from '../directbooker/types';
+import { hotelImageClasses } from '../shared/classnames';
 
 export const HotelTitle = ({ hotel }: { hotel: Hotel }): React.JSX.Element => {
   return <div className="text-base font-medium truncate line-clamp-1">{hotel.name}</div>;
@@ -49,7 +50,7 @@ export const HotelImage = ({ hotel }: { hotel: Hotel }): React.JSX.Element => {
       <img
         src={hotel.carousel_image}
         alt={hotel.name}
-        className="w-full max-w-[35vw] aspect-square rounded-2xl object-cover ring-1 ring-black/5"
+        className={hotelImageClasses()}
       />
     </div>
   );

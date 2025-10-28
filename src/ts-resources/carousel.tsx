@@ -10,6 +10,7 @@ import {
   HotelImage,
   HotelPriceButton,
 } from '../components/hotels';
+import { hotelCardContainerClasses } from '../shared/classnames';
 
 const Carousel = (): React.JSX.Element => {
   return <HotelCarousel />;
@@ -38,7 +39,7 @@ interface HotelCardProps {
 
 function HotelCard({ hotel }: HotelCardProps): React.JSX.Element {
   return (
-    <div className="flex flex-col select-none flex-[0_0_35vw] mx-2">
+    <div className={hotelCardContainerClasses()}>
       <HotelImage hotel={hotel} />
       <div className="flex flex-col flex-1 mt-3 flex-auto combined">
         <HotelTitle hotel={hotel} />
