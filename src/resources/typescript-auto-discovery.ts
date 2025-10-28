@@ -128,7 +128,7 @@ export async function discoverTypeScriptResources(): Promise<ResourceDefinition[
         ['.ts', '.tsx'].includes(extname(file)) && !file.startsWith('.') && !file.endsWith('.d.ts')
     );
 
-    console.log(`🔍 Auto-discovering ${tsFiles.length} TypeScript files...`);
+    console.error(`🔍 Auto-discovering ${tsFiles.length} TypeScript files...`);
 
     // Create resources for each TypeScript file
     for (const file of tsFiles) {
@@ -151,7 +151,7 @@ export async function discoverTypeScriptResources(): Promise<ResourceDefinition[
         const resource = createTypeScriptResource(config);
         resources.push(resource);
 
-        console.log(
+        console.error(
           `✓ Auto-discovered TypeScript resource: dbk-ts://${config.uriId} (${config.name})`
         );
       } catch (error) {
