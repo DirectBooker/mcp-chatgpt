@@ -5,6 +5,7 @@ import {
   TypeScriptResourceConfig,
 } from './typescript-resource-factory.js';
 import { ResourceDefinition } from './types.js';
+import { logger } from '../shared/logger.js';
 
 /**
  * Metadata configuration for auto-discovered TypeScript files
@@ -115,7 +116,7 @@ export async function discoverTypeScriptResources(): Promise<ResourceDefinition[
     try {
       await stat(typescriptDir);
     } catch {
-      console.warn('TypeScript resources directory not found:', typescriptDir);
+      logger.warn('TypeScript resources directory not found:', typescriptDir);
       return resources;
     }
 
@@ -128,7 +129,7 @@ export async function discoverTypeScriptResources(): Promise<ResourceDefinition[
         ['.ts', '.tsx'].includes(extname(file)) && !file.startsWith('.') && !file.endsWith('.d.ts')
     );
 
-    console.error(`🔍 Auto-discovering ${tsFiles.length} TypeScript files...`);
+    logger.info(`🔍 Auto-discovering ${tsFiles.length} TypeScript files...`);
 
     // Create resources for each TypeScript file
     for (const file of tsFiles) {
@@ -151,17 +152,17 @@ export async function discoverTypeScriptResources(): Promise<ResourceDefinition[
         const resource = createTypeScriptResource(config);
         resources.push(resource);
 
-        console.error(
+        logger.info(
           `✓ Auto-discovered TypeScript resource: dbk-ts://${config.uriId} (${config.name})`
         );
       } catch (error) {
-        console.warn(`⚠️  Failed to create resource for ${file}:`, error);
+        logger.warn(`⚠️  Failed to create resource for ${file}:`, error);
       }
     }
 
     return resources;
   } catch (error) {
-    console.error('Failed to auto-discover TypeScript resources:', error);
+    logger.error('Failed to auto-discover TypeScript resources:', error);
     return resources;
   }
 }

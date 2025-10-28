@@ -6,6 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import { join } from 'path';
 import { ToolRegistry, availableTools } from './tools/index.js';
+import { logger } from './shared/logger.js';
 import { ResourceRegistry, getAvailableResources } from './resources/index.js';
 import { initializeUrlSalt } from './resources/typescript-resource-factory.js';
 
@@ -58,7 +59,7 @@ class MCPChatGPTServer {
 
     // Basic request logging (stderr to avoid MCP stdout interference)
     this.app.use((req, _res, next) => {
-      console.error(`[HTTP] ${req.method} ${req.originalUrl}`);
+      logger.http(`${req.method} ${req.originalUrl}`);
       next();
     });
 
@@ -116,24 +117,24 @@ class MCPChatGPTServer {
             })
             .filter(Boolean) as string[];
           if (methods.length) {
-            console.error(`[MCP] RPC batch: ${methods.join(', ')}`);
+            logger.mcp(`RPC batch: ${methods.join(', ')}`);
           } else {
-            console.error('[MCP] RPC batch request received');
+            logger.mcp('RPC batch request received');
           }
         } else if (body && typeof body === 'object') {
           const method = (body as { method?: string; id?: string | number }).method;
           const id = (body as { id?: string | number }).id;
           if (method) {
-            console.error(`[MCP] RPC: ${method}${id !== undefined ? ` id=${String(id)}` : ''}`);
+            logger.mcp(`RPC: ${method}${id !== undefined ? ` id=${String(id)}` : ''}`);
           } else {
-            console.error('[MCP] RPC request received');
+            logger.mcp('RPC request received');
           }
         }
 
         await transport.handleRequest(req, res, req.body);
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.error('MCP request error:', errorMessage);
+        logger.error('MCP request error:', errorMessage);
         if (!res.headersSent) {
           res.status(500).json({ error: 'Internal server error' });
         }
@@ -176,22 +177,22 @@ class MCPChatGPTServer {
     // Setup resources with auto-discovery
     await this.setupMCPResources();
 
-    console.error('✓ MCP server ready for multi-client connections');
+    logger.info('✓ MCP server ready for multi-client connections');
 
     // Start Express server for HTTP endpoints
     const port = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3000;
     const httpServer = this.app.listen(port, () => {
-      console.error(`✓ HTTP server running on port ${port}`);
-      console.error(`✓ MCP endpoints available at:`);
-      console.error(`  - POST http://localhost:${port}/mcp (JSON-RPC)`);
-      console.error(`  - GET http://localhost:${port}/mcp (Server-Sent Events)`);
-      console.error(`  - DELETE http://localhost:${port}/mcp (Session termination)`);
-      console.error(`✓ Info endpoint: http://localhost:${port}/info`);
+      logger.info(`✓ HTTP server running on port ${port}`);
+      logger.info('✓ MCP endpoints available at:');
+      logger.info(`  - POST http://localhost:${port}/mcp (JSON-RPC)`);
+      logger.info(`  - GET http://localhost:${port}/mcp (Server-Sent Events)`);
+      logger.info(`  - DELETE http://localhost:${port}/mcp (Session termination)`);
+      logger.info(`✓ Info endpoint: http://localhost:${port}/info`);
     });
 
     // Handle graceful shutdown
     process.on('SIGINT', async () => {
-      console.error('Received SIGINT, shutting down gracefully...');
+      logger.info('Received SIGINT, shutting down gracefully...');
 
       // Close HTTP server (transports are closed per-request)
       httpServer.close(() => {
@@ -209,7 +210,7 @@ async function main(): Promise<void> {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error: unknown) => {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   });
 }

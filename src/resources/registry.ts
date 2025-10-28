@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ResourceDefinition } from './types.js';
+import { logger } from '../shared/logger.js';
 
 /**
  * Resource registry that manages resource registration with the MCP server
@@ -35,7 +36,7 @@ export class ResourceRegistry {
       },
       async () => {
         // Log resource read (stderr)
-        console.error(`[MCP] resources/read ${config.uri}`);
+        logger.mcp(`resources/read ${config.uri}`);
         try {
           const contentData = await implementation();
 
@@ -67,7 +68,7 @@ export class ResourceRegistry {
 
     // Track registered resources
     this.registeredResources.set(config.uri, resource);
-    console.error(`✓ Registered resource: ${config.uri}`);
+    logger.info(`✓ Registered resource: ${config.uri}`);
   }
 
   /**

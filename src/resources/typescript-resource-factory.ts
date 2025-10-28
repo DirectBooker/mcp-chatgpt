@@ -1,5 +1,6 @@
 import { ResourceDefinition } from './types.js';
 import { readFile, stat } from 'fs/promises';
+import { logger } from '../shared/logger.js';
 import { join } from 'path';
 
 /**
@@ -28,10 +29,10 @@ export function initializeUrlSalt(): void {
   const envSalt = process.env['TS_SALT'];
   if (envSalt && envSalt.length > 0) {
     urlSalt = envSalt;
-    console.error(`✓ TypeScript resource URL salt initialized from TS_SALT env var`);
+    logger.info('✓ TypeScript resource URL salt initialized from TS_SALT env var');
   } else {
     urlSalt = Date.now().toString();
-    console.error(`✓ TypeScript resource URL salt initialized from app start time: ${urlSalt}`);
+    logger.info(`✓ TypeScript resource URL salt initialized from app start time: ${urlSalt}`);
   }
 }
 

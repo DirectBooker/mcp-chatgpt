@@ -2,6 +2,7 @@ import React, { RefObject, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import mapboxgl, { EasingOptions, Map as MapboxMap } from 'mapbox-gl';
 import { mapWrapperClasses, rootContainerClasses } from '../shared/classnames';
+import { logger } from '../shared/logger';
 
 declare global {
   interface Window {
@@ -151,7 +152,7 @@ const HotelMap = (): React.JSX.Element => {
     if (mapObj.current || !mapRef.current) return;
     const token = window.DBK_MAPBOX_TOKEN;
     if (!token) {
-      console.error('Mapbox token not configured');
+      logger.error('Mapbox token not configured');
       return;
     }
     mapboxgl.accessToken = token;

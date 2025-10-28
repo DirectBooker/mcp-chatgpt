@@ -11,6 +11,7 @@ import {
   HotelPriceButton,
 } from '../components/hotels';
 import { hotelCardContainerClasses } from '../shared/classnames';
+import { logger } from '../shared/logger';
 
 const Carousel = (): React.JSX.Element => {
   return <HotelCarousel />;
@@ -55,5 +56,5 @@ const element = document.getElementById('ts-resource-carousel');
 if (element) {
   createRoot(element).render(<Carousel />);
 } else {
-  console.error("Cannot find 'ts-resource-carousel'");
+  logger.error("Cannot find 'ts-resource-carousel'");
 }

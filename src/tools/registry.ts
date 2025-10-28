@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z, ZodRawShape } from 'zod';
 import { ToolDefinition } from './types.js';
+import { logger } from '../shared/logger.js';
 
 /**
  * Tool registry that manages tool registration with the MCP server
@@ -46,7 +47,7 @@ export class ToolRegistry {
 
     this.mcpServer.registerTool(config.name, toolConfig, async args => {
       // Log tool invocation (stderr)
-      console.error(`[MCP] tools/call ${config.name}`);
+      logger.mcp(`tools/call ${config.name}`);
 
       try {
         // Validate and parse input arguments using the tool's schema
@@ -90,7 +91,7 @@ export class ToolRegistry {
       config.name,
       tool as unknown as ToolDefinition<ZodRawShape, ZodRawShape>
     );
-    console.error(`✓ Registered tool: ${config.name}`);
+    logger.info(`✓ Registered tool: ${config.name}`);
   }
 
   /**
