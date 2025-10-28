@@ -69,7 +69,7 @@ export const HotelPriceButton = ({ hotel }: { hotel: Hotel }): React.JSX.Element
         disabled={!hotel.price_link}
       >
         <span>
-          {'Book at '} <strong> {` ${hotel.price}`}</strong>
+          Book at <strong>{hotel.price}</strong>
         </span>
       </button>
     </div>
