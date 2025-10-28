@@ -34,7 +34,13 @@ const outputSchema = {
           .optional()
           .describe('URL link associated with the price for booking or more details'),
         description: z.string().describe('Brief description of the hotel'),
-        rating: z.number().min(0).max(5).describe('Hotel rating from 1 to 5 stars. A value of 0 means that rating information wasn\'t available for this property.'),
+        rating: z
+          .number()
+          .min(0)
+          .max(5)
+          .describe(
+            "Hotel rating from 1 to 5 stars. A value of 0 means that rating information wasn't available for this property."
+          ),
         amenities: z.array(z.string()).describe('List of hotel amenities'),
         hotel_id: z
           .number()
@@ -90,76 +96,51 @@ interface PropertyData {
   };
 }
 
-// Tool implementation function
-async function implementation(args: {
-  city: string;
-  'start-date'?: string | undefined;
-  'end-date'?: string | undefined;
-}): Promise<CallToolResult> {
-  const { city, 'start-date': startDate, 'end-date': endDate } = args;
+// Helper utilities
+const todayString = (): string => new Date().toISOString().split('T')[0] ?? '';
 
-  // Get today's date string in YYYY-MM-DD format (timezone-safe)
-  const todayString = new Date().toISOString().split('T')[0] ?? '';
+const isPast = (dateStr: string, today: string): boolean => dateStr < today;
 
-  // Validate dates are not in the past (string comparison is timezone-safe)
-  if (startDate) {
-    if (startDate < todayString) {
-      throw new Error('Check-in date cannot be in the past');
-    }
+function validateDates(startDate?: string, endDate?: string): void {
+  const today = todayString();
+  if (startDate && isPast(startDate, today)) {
+    throw new Error('Check-in date cannot be in the past');
   }
-
-  if (endDate) {
-    if (endDate < todayString) {
-      throw new Error('Check-out date cannot be in the past');
-    }
+  if (endDate && isPast(endDate, today)) {
+    throw new Error('Check-out date cannot be in the past');
   }
-
-  // Validate date logic if both dates are provided
   if (startDate && endDate) {
     const start = new Date(startDate);
     const end = new Date(endDate);
-
     if (start >= end) {
       throw new Error('Check-out date must be after check-in date');
     }
   }
+}
 
-  // Build API URL
+function buildApiUrl(city: string, startDate?: string, endDate?: string): string {
   // TODO(george): Add 'mcp' parameter to request and limit response length for better performance
-  let apiUrl = `https://www.directbooker.com/api/search?q=${encodeURIComponent(city)}`;
-  if (startDate) {
-    apiUrl += `&sd=${startDate}`;
-  }
-  if (endDate) {
-    apiUrl += `&ed=${endDate}`;
-  }
+  const params: string[] = [`q=${encodeURIComponent(city)}`];
+  if (startDate) params.push(`sd=${startDate}`);
+  if (endDate) params.push(`ed=${endDate}`);
+  return `https://www.directbooker.com/api/search?${params.join('&')}`;
+}
 
-  // Call the DirectBooker API
-  const apiResponse = await fetch(apiUrl);
-  if (!apiResponse.ok) {
-    throw new Error(`API request failed: ${apiResponse.status} ${apiResponse.statusText}`);
-  }
+const toNumber = (v: number | string | undefined): number | undefined => {
+  if (v === undefined) return undefined;
+  if (typeof v === 'number') return v;
+  const n = Number(v);
+  return Number.isNaN(n) ? undefined : n;
+};
 
-  const apiData = (await apiResponse.json()) as ApiResponse;
-
-  // Helper to safely convert possible string/number to number
-  const toNumber = (v: number | string | undefined): number | undefined => {
-    if (v === undefined) return undefined;
-    if (typeof v === 'number') return v;
-    const n = Number(v);
-    return Number.isNaN(n) ? undefined : n;
-  };
-
-  // Map API response to our format (limit to 8 results)
-  const hotels: Hotel[] = (apiData.properties || []).map((property: PropertyData) => {
-    // Create description from location and top amenities
-    const location = property.location_data?.address_structured?.city || city;
+function mapPropertiesToHotels(apiData: ApiResponse, fallbackCity: string): Hotel[] {
+  return (apiData.properties || []).map((property: PropertyData) => {
+    const location = property.location_data?.address_structured?.city || fallbackCity;
     const topAmenities = (property.amenities || []).slice(0, 3).join(', ');
     const description = topAmenities
       ? `Located in ${location}. Features: ${topAmenities}`
       : `Hotel located in ${location}`;
 
-    // Extract carousel image from first photo's thumbnail_url
     const carouselImage = property.photos?.[0]?.thumbnail_url || undefined;
 
     return {
@@ -169,16 +150,31 @@ async function implementation(args: {
       description,
       rating: property.review_rating || 0,
       amenities: property.amenities || [],
-      hotel_id: property['hotel_id'] || property.hotel_id || undefined,
+      hotel_id: property.hotel_id ?? (property as { hotel_id?: number })?.hotel_id ?? undefined,
       property_token:
-        property['property_token'] || property.property_token || property.token || 'unknown',
+        property.property_token ??
+        property.token ??
+        (property as { property_token?: string })?.property_token ??
+        'unknown',
       carousel_image: carouselImage,
       latitude: toNumber(property.gps_coordinates?.latitude),
       longitude: toNumber(property.gps_coordinates?.longitude),
     };
   });
+}
 
-  // Format response text
+function formatDateRange(startDate?: string, endDate?: string): string {
+  if (startDate && endDate) return ` for ${startDate} to ${endDate}`;
+  if (startDate) return ` starting ${startDate}`;
+  return '';
+}
+
+function formatHotelsText(
+  city: string,
+  hotels: Hotel[],
+  startDate?: string,
+  endDate?: string
+): string {
   const hotelList = hotels
     .map(
       (hotel, index) =>
@@ -189,17 +185,36 @@ async function implementation(args: {
     )
     .join('\n\n');
 
-  const dateRange =
-    startDate && endDate
-      ? ` for ${startDate} to ${endDate}`
-      : startDate
-        ? ` starting ${startDate}`
-        : '';
+  const dateRange = formatDateRange(startDate, endDate);
+  return hotels.length > 0
+    ? `Found ${hotels.length} hotels in ${city}${dateRange}:\n\n${hotelList}`
+    : `No hotels found in ${city}${dateRange}. Please try a different city or date range.`;
+}
 
-  const responseText =
-    hotels.length > 0
-      ? `Found ${hotels.length} hotels in ${city}${dateRange}:\n\n${hotelList}`
-      : `No hotels found in ${city}${dateRange}. Please try a different city or date range.`;
+// Tool implementation function
+async function implementation(args: {
+  city: string;
+  'start-date'?: string | undefined;
+  'end-date'?: string | undefined;
+}): Promise<CallToolResult> {
+  const { city, 'start-date': startDate, 'end-date': endDate } = args;
+
+  // Validate dates
+  validateDates(startDate, endDate);
+
+  // Build API URL and call API
+  const apiUrl = buildApiUrl(city, startDate, endDate);
+  const apiResponse = await fetch(apiUrl);
+  if (!apiResponse.ok) {
+    throw new Error(`API request failed: ${apiResponse.status} ${apiResponse.statusText}`);
+  }
+  const apiData = (await apiResponse.json()) as ApiResponse;
+
+  // Map API response
+  const hotels: Hotel[] = mapPropertiesToHotels(apiData, city);
+
+  // Format response
+  const responseText = formatHotelsText(city, hotels, startDate, endDate);
 
   // Structured data matching the output schema
   const structuredData = {

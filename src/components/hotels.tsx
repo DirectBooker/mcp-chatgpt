@@ -47,11 +47,7 @@ export const HotelImage = ({ hotel }: { hotel: Hotel }): React.JSX.Element => {
   // TODO(george): Add image fallback
   return (
     <div className="w-full">
-      <img
-        src={hotel.carousel_image}
-        alt={hotel.name}
-        className={hotelImageClasses()}
-      />
+      <img src={hotel.carousel_image} alt={hotel.name} className={hotelImageClasses()} />
     </div>
   );
 };

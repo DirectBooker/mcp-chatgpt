@@ -90,9 +90,12 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
 
       return {
         text: `<style>${cssContent}</style>
-        <div id=\"ts-resource-${config.uriId}\"\n                style=\"background: #ddd; padding: 1em\">Developer preview</div>
+        <div id="ts-resource-${config.uriId}"
+                style="background: #ddd; padding: 1em">Developer preview</div>
 ${injectTokenScript}
-<script type=\"module\">\n${jsContent}\n</script>`,
+<script type="module">
+${jsContent}
+</script>`,
       };
     } catch (error) {
       // If files don't exist or can't be read, provide helpful error
