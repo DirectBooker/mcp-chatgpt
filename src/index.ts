@@ -38,6 +38,12 @@ class MCPChatGPTServer {
   }
 
   private setupExpress(): void {
+    this.registerCommonMiddleware();
+    this.registerInfoEndpoints();
+    this.registerMcpRoutes();
+  }
+
+  private registerCommonMiddleware(): void {
     // Enable CORS for MCP Inspector and other web clients
     this.app.use(
       cors({
@@ -58,7 +64,9 @@ class MCPChatGPTServer {
 
     // Serve static assets (e.g., Tailwind CSS)
     this.app.use('/assets', express.static(join(process.cwd(), 'dist/assets')));
+  }
 
+  private registerInfoEndpoints(): void {
     // Health check endpoint
     this.app.get('/health', (_req, res) => {
       res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -79,9 +87,10 @@ class MCPChatGPTServer {
         },
       });
     });
+  }
 
-    // MCP StreamableHTTP endpoints - create new transport per request for multi-client support
-    this.app.all('/mcp', async (req, res) => {
+  private createMcpRequestHandler(): express.RequestHandler {
+    return async (req, res) => {
       try {
         // Create a new transport for each request to prevent request ID collisions
         const transport = new StreamableHTTPServerTransport({
@@ -129,7 +138,12 @@ class MCPChatGPTServer {
           res.status(500).json({ error: 'Internal server error' });
         }
       }
-    });
+    };
+  }
+
+  private registerMcpRoutes(): void {
+    // MCP StreamableHTTP endpoints - create new transport per request for multi-client support
+    this.app.all('/mcp', this.createMcpRequestHandler());
   }
 
   private setupMCPTools(): void {

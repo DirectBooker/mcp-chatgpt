@@ -1,5 +1,5 @@
 import { ResourceDefinition } from './types.js';
-import { readFile } from 'fs/promises';
+import { readFile, stat } from 'fs/promises';
 import { join } from 'path';
 
 /**
@@ -56,6 +56,20 @@ export function createSaltedUri(uriId: string): string {
  * Factory function to create TypeScript MCP resources with shared implementation
  * This eliminates boilerplate code duplication across TypeScript resource files
  */
+// Simple file content cache to avoid per-request disk reads
+const fileCache = new Map<string, { mtimeMs: number; content: string }>();
+
+async function readCachedFile(filePath: string): Promise<string> {
+  const stats = await stat(filePath);
+  const cached = fileCache.get(filePath);
+  if (cached && cached.mtimeMs === stats.mtimeMs) {
+    return cached.content;
+  }
+  const content = await readFile(filePath, 'utf-8');
+  fileCache.set(filePath, { mtimeMs: stats.mtimeMs, content });
+  return content;
+}
+
 export function createTypeScriptResource(config: TypeScriptResourceConfig): ResourceDefinition {
   // Create the implementation function with the provided configuration
   async function implementation(): Promise<{ text: string }> {
@@ -68,7 +82,7 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
 
       // Read the bundled JavaScript content
       // TODO(george): Cache bundled JS and Tailwind CSS contents per filename and invalidate on file mtime to avoid per-request disk reads.
-      const jsContent = await readFile(jsFilePath, 'utf-8');
+      const jsContent = await readCachedFile(jsFilePath);
 
       // Inline Tailwind CSS (no external references)
       // TODO(george): Generate and inline per-resource Tailwind CSS (e.g., dist/assets/ts-resources/${config.filename}.css)
@@ -76,7 +90,7 @@ export function createTypeScriptResource(config: TypeScriptResourceConfig): Reso
       const cssFilePath = join(projectRoot, 'dist/assets/tailwind.css');
       let cssContent = '';
       try {
-        cssContent = await readFile(cssFilePath, 'utf-8');
+        cssContent = await readCachedFile(cssFilePath);
       } catch {
         cssContent = '/* tailwind.css not found; run "pnpm run build:css" to generate */';
       }

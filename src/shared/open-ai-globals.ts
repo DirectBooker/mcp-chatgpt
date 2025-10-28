@@ -15,7 +15,7 @@ function useOpenAiGlobal<K extends string>(key: K): unknown {
         window.removeEventListener(SET_GLOBALS_EVENT_TYPE, handler as EventListener);
     },
     // Snapshot: always read through the proxy (correct source of truth)
-    (): unknown => (window as unknown as { openai: Record<string, unknown> }).openai[key]
+    (): unknown => window.openai[key]
   );
 }
 

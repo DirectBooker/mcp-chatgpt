@@ -28,8 +28,7 @@ import { HotelDescription, HotelPriceButton, HotelRating, HotelTitle } from '../
 const fitMapToMarkers = (map: MapboxMap | null, coords: [number, number][]): void => {
   if (!map || !coords.length) return;
   if (coords.length === 1) {
-    // TODO(george): This '||' is annoying but needed to satisfy TS. Find a better way.
-    map.flyTo({ center: coords[0] || [0, 0], zoom: 12 });
+    map.flyTo({ center: coords[0] as [number, number], zoom: 12 });
     return;
   }
   const bounds = coords.reduce(
@@ -52,7 +51,16 @@ const HotelPopup = (props: { hotel: Hotel }): React.JSX.Element => {
   );
 };
 
-const addAllMarkers = (
+function createHotelPopup(hotel: Hotel): mapboxgl.Popup {
+  const container = document.createElement('div');
+  const root = createRoot(container);
+  root.render(<HotelPopup hotel={hotel} />);
+  const popup = new mapboxgl.Popup().setDOMContent(container);
+  popup.on('close', () => root.unmount());
+  return popup;
+}
+
+const updateMarkers = (
   mapObj: RefObject<MapboxMap | null>,
   markerObjs: RefObject<Array<mapboxgl.Marker>>,
   hotelList: Hotel[] | undefined,
@@ -64,24 +72,18 @@ const addAllMarkers = (
 
   markerObjs.current.forEach(m => m.remove());
   markerObjs.current = [];
+
   hotelList.forEach(hotel => {
     if (hotel.latitude == null || hotel.longitude == null) return;
     const latlon: [number, number] = [hotel.longitude, hotel.latitude];
 
-    // TODO(george): Make this a function.
-    const container = document.createElement('div');
-    const root = createRoot(container);
-    // onNavigate={navigate}
-    root.render(<HotelPopup hotel={hotel} />);
-    const popup = new mapboxgl.Popup().setDOMContent(container);
-    popup.on('close', () => root.unmount()); // cleanup
+    const popup = createHotelPopup(hotel);
 
-    const marker = new mapboxgl.Marker({
-      color: '#F46C21',
-    })
+    const marker = new mapboxgl.Marker({ color: '#F46C21' })
       .setLngLat(latlon)
       .addTo(currentMap)
-      .setPopup(popup); // add popup
+      .setPopup(popup);
+
     const el = marker.getElement();
     if (el) {
       el.style.cursor = 'pointer';
@@ -90,6 +92,7 @@ const addAllMarkers = (
         panTo(mapObj, latlon, { offsetForInspector: true }, displayMode);
       });
     }
+
     markerObjs.current.push(marker);
   });
 };
@@ -160,7 +163,7 @@ const HotelMap = (): React.JSX.Element => {
       attributionControl: false,
     });
 
-    addAllMarkers(mapObj, markerObjs, hotels, navigate, displayMode);
+    updateMarkers(mapObj, markerObjs, hotels, navigate, displayMode);
     setTimeout(() => {
       fitMapToMarkers(mapObj.current, markerCoords);
     }, 0);
@@ -171,7 +174,7 @@ const HotelMap = (): React.JSX.Element => {
 
   useEffect(() => {
     if (!mapObj.current) return;
-    addAllMarkers(mapObj, markerObjs, hotels, navigate, displayMode);
+    updateMarkers(mapObj, markerObjs, hotels, navigate, displayMode);
   }, [hotels, displayMode]);
 
   // TODO(george): Find a better way to sync the version of the CSS with the version of mapbox-gl.
