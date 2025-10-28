@@ -13,7 +13,7 @@ export const mapWrapperClasses = (displayMode: string): string =>
     'absolute inset-0 overflow-hidden',
     displayMode === 'fullscreen'
       ? 'md:left-[340px] md:right-4 md:top-4 md:bottom-4 border border-black/10 md:rounded-3xl'
-      : 'w-full h-full bg-red-200'
+      : 'w-full h-full'
   );
 
 export const hotelCardContainerClasses = (): string =>
