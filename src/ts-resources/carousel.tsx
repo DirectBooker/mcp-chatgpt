@@ -27,7 +27,10 @@ function HotelCarousel(): React.JSX.Element {
     <div className="embla overflow-hidden" ref={emblaRef}>
       <div className="embla__container flex">
         {hotels.slice(0, 10).map(hotel => (
-          <HotelCard key={hotel.hotel_id} hotel={hotel} />
+          <HotelCard
+            key={hotel.hotel_id ?? `${hotel.property_token}:${hotel.name}`}
+            hotel={hotel}
+          />
         ))}
       </div>
     </div>

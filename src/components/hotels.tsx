@@ -24,11 +24,14 @@ export const Star = (): React.JSX.Element => {
 };
 
 export const HotelRating = ({ hotel }: { hotel: Hotel }): React.JSX.Element => {
+  const ratingText = Number.isFinite(hotel.rating)
+    ? (hotel.rating as number).toFixed(1)
+    : String(hotel.rating);
   return (
     <div className="text-xs mt-1 text-black/60 flex items-center gap-1">
       <span className="flex items-center gap-1">
         <Star />
-        {hotel.rating?.toFixed ? hotel.rating.toFixed(1) : hotel.rating}
+        {ratingText}
       </span>
       {hotel.price ? <span>· {hotel.price}</span> : null}
     </div>
